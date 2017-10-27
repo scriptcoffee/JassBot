@@ -35,7 +35,7 @@ class BaseBot(object):
         self.chosen_team_index = chosen_team_index
 
         self.teams = None
-        self.handCards= []
+        self.hand_cards= []
         self.won_stich_in_game = []
         self.last_round_points = 0
 
@@ -58,7 +58,7 @@ class BaseBot(object):
             data = {}
 
         if message_type == MessageType.REQUEST_PLAYER_NAME:
-            #CHALLENGE2017: Respond with your BotName
+            # CHALLENGE2017: Respond with your BotName
             logger.info('MyName: ' + self.name)
             answer = messages.create(MessageType.CHOOSE_PLAYER_NAME, self.name)
             
@@ -73,7 +73,7 @@ class BaseBot(object):
             
         elif message_type == MessageType.DEAL_CARDS:
             self.last_round_points = 0
-            self.handCards = data
+            self.hand_cards = data
 
         elif message_type == MessageType.REQUEST_TRUMPF:
             game_type = self.handle_request_trumpf()
@@ -160,15 +160,16 @@ class BaseBot(object):
 
     def handle_reject_card(self, data):
         # CHALLENGE2017: When server sends this, you send an invalid card... this should never happen!
-        # Server will send "REQUEST_CARD" after this once. Make sure you choose a valid card or your bot will loose the game
+        # Server will send "REQUEST_CARD" after this once.
+        # Make sure you choose a valid card or your bot will loose the game
         logger.warning(" ######   SERVER REJECTED CARD   #######")
         logger.warning("Rejected card: %s", data)
-        logger.warning("Hand Cards: %s", self.handCards)
+        logger.warning("Hand Cards: %s", self.hand_cards)
         logger.warning("Gametype: %s", self.game_type)
 
-    def handle_request_card(self, tableCards):
+    def handle_request_card(self, table_cards):
         # CHALLENGE2017: Ask the brain which card to choose
-        card = self.handCards[0]
+        card = self.hand_cards[0]
         return card
 
     def in_my_team(self, winner):
@@ -190,10 +191,10 @@ class BaseBot(object):
         return 0
 
     def update_hand(self, played_cards):
-        lastPlayedCard = played_cards[-1]
-        handCards = []
-        for card in self.handCards:
-            if card.number != lastPlayedCard.number or card.color != lastPlayedCard.color:
-                handCards.append(card)
-        self.handCards = handCards
+        last_played_card = played_cards[-1]
+        hand_cards = []
+        for card in self.hand_cards:
+            if card.number != last_played_card.number or card.color != last_played_card.color:
+                hand_cards.append(card)
+        self.hand_cards = hand_cards
 
