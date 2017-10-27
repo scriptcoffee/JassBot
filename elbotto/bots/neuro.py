@@ -37,7 +37,7 @@ class Bot(BaseBot):
 
     def handle_request_card(self, tableCards):
         # CHALLENGE2017: Ask the brain which card to choose
-        card = self.game_strategy.chooseCard(self.handCards, tableCards)
+        card = self.game_strategy.chooseCard(self.handCards, tableCards, self.game_type)
         return card
 
 
@@ -60,11 +60,11 @@ class PlayStrategy(object):
         # if self.gschobe: nüme schiebe
         return DEFAULT_TRUMPF
 
-    def chooseCard(self, handcards, tableCards):
+    def chooseCard(self, handcards, tableCards, game_type):
         # 36 Inputs (one per card).
         # Status: 0 - no info, 1 - in hand, 2 - first card on table, 3 - second card on table, 4 - third card on table
 
-        inputs = [0] * 36
+        inputs = [0] * 42
 
         for card in handcards:
             inputs[card.id] = 1
@@ -73,6 +73,15 @@ class PlayStrategy(object):
             c = tableCards[x]
             c = card.create(c["number"], c["color"])
             inputs[c.id] = x + 2
+
+        if game_type.mode == "TRUMPF":
+            inputs[game_type.trumpf_color.value + 36] = 1
+
+        elif game_type.mode == "OBEABE":
+            inputs[40] = 1
+
+        elif game_type.mode == "OBEABE":
+            inputs[41] = 1
 
         #CHALLENGE2017: Implement logic to choose card so your bot will beat all the others.
         # Keep in mind that your counterpart is another instance of your bot
