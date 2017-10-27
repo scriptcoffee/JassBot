@@ -2,6 +2,7 @@ import threading
 
 from elbotto import launcher
 from elbotto.bots import stochastic
+from elbotto.bots import neuro
 
 DEFAULT_BOT_NAME = "El botto del jasso"
 
@@ -14,8 +15,8 @@ def launch(bot_class, bot_name, server_address=DEFAULT_SERVER_NAME):
 def start_bots():
     threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": DEFAULT_BOT_NAME}).start()
     threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": DEFAULT_BOT_NAME}).start()
-    threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": "Dude"}).start()
-    t = threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": "Dude"})
+    threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": "NeuroBot"}).start()
+    t = threading.Thread(target=launch, kwargs={"bot_class": neuro.Bot, "bot_name": "NeuroBot"})
 
     t.start()
     t.join()
