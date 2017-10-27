@@ -66,7 +66,12 @@ class PlayStrategy(object):
     def __init__(self):
         self.geschoben = False
         self.cardsAtTable = []
-        self.epsilon = 0.1
+
+        self.gamma = 0.95
+        self.epsilon = 0.6
+        self.epsilon_decay = 0.995
+        self.epsilon_min = 0.01
+        self.batch_size = 32
 
         self.reset_tmp_memory()
 
@@ -123,7 +128,7 @@ class PlayStrategy(object):
     def game_finished(self):
         self.memory.append((self.old_observation, self.action, self.reward, None, 1))
         self.reset_tmp_memory()
-        print(self.memory)
+        self.replay()
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
         # 36 Inputs (one per card).
@@ -167,3 +172,20 @@ class PlayStrategy(object):
         self.action = card_to_play.id
 
         return card_to_play
+
+    def replay(self):
+        if len(self.memory) < self.batch_size:
+            return 0
+
+        minibatch = random.sample(self.memory, self.batch_size)
+        for state, action, reward, next_state, done in minibatch:
+            target = reward
+            if not done:
+                target = (reward + self.gamma *
+                          np.amax(self.q_model.predict(next_state)[0]))
+            target_f = self.q_model.predict(state)
+            target_f[0][action] = target
+            history = self.q_model.fit(state, target_f, epochs=1, verbose=0)
+
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
