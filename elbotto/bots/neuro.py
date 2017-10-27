@@ -2,6 +2,7 @@ import logging
 import random
 import keras
 import numpy as np
+from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.regularizers import l2
@@ -11,6 +12,8 @@ from keras.utils import np_utils
 from elbotto.basebot import BaseBot, DEFAULT_TRUMPF
 
 logger = logging.getLogger(__name__)
+
+CARD_REJECTED_PENALTY = -100
 
 
 class Bot(BaseBot):
@@ -24,6 +27,7 @@ class Bot(BaseBot):
         self.game_strategy = PlayStrategy()
 
         self.start()
+
 
     def handle_request_trumpf(self):
         # CHALLENGE2017: Ask the brain which gameMode to choose
@@ -42,11 +46,19 @@ class Bot(BaseBot):
         logger.debug("Hand Cards: %s", self.hand_cards)
         logger.debug("cardsAtTable %s", self.game_strategy.cardsAtTable)
         logger.debug("Gametype: %s", self.game_type)
+        self.game_strategy.card_rejected()
 
     def handle_request_card(self, table_cards):
         # CHALLENGE2017: Ask the brain which card to choose
         card = self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type)
         return card
+
+    def handle_stich(self, winner, round_points, total_points):
+        self.game_strategy.stich_reward(round_points)
+
+    def handle_game_finished(self):
+        super(Bot, self).handle_game_finished()
+        self.game_strategy.game_finished()
 
 
 class PlayStrategy(object):
@@ -56,7 +68,16 @@ class PlayStrategy(object):
         self.cardsAtTable = []
         self.epsilon = 0.1
 
+        self.reset_tmp_memory()
+
+        self.memory = deque(maxlen=50000)
+
         self.q_model = self.define_model()
+
+    def reset_tmp_memory(self):
+        self.reward = None
+        self.old_observation = None
+        self.action = None
 
     @staticmethod
     def define_model():
@@ -84,25 +105,40 @@ class PlayStrategy(object):
         return DEFAULT_TRUMPF
 
     def choose_card(self, hand_cards, table_cards, game_type):
-        idx = random.randint(0, len(hand_cards)-1)
-        card_to_play = hand_cards[idx]
 
-        if random.random() > self.epsilon:
-            card_to_play = self.model_choose_card(game_type, hand_cards, table_cards)
+        card_to_play = self.model_choose_card(game_type, hand_cards, table_cards)
+
+        if random.random() < self.epsilon:
+            idx = random.randint(0, len(hand_cards)-1)
+            card_to_play = hand_cards[idx]
 
         return card_to_play
+
+    def card_rejected(self):
+        self.reward = CARD_REJECTED_PENALTY
+
+    def stich_reward(self, round_points):
+        self.reward = round_points
+
+    def game_finished(self):
+        self.memory.append((self.old_observation, self.action, self.reward, None, 1))
+        self.reset_tmp_memory()
+        print(self.memory)
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
         # 36 Inputs (one per card).
         # Status: 0 - no info, 1 - in hand, 2 - first card on table, 3 - second card on table, 4 - third card on table
 
         inputs = np.zeros((42,))
+
         for card in hand_cards:
             inputs[card.id] = 1
+
         for x in range(0, len(table_cards)):
             c = table_cards[x]
             c = card.create(c["number"], c["color"])
             inputs[c.id] = x + 2
+
         if game_type.mode == "TRUMPF":
             inputs[game_type.trumpf_color.value + 36] = 1
 
@@ -111,13 +147,23 @@ class PlayStrategy(object):
 
         elif game_type.mode == "OBEABE":
             inputs[41] = 1
+
         i = np.reshape(inputs, (1, 42))
+
+        if self.old_observation is not None and self.action is not None and self.reward is not None:
+            self.memory.append((self.old_observation, self.action, self.reward, i, 0))
+
         q = self.q_model.predict(i)
+
         card_to_play = hand_cards[0]
-        card_q = 0
+
+        card_q = None
         for c in hand_cards:
-            if card_q < q[0, c.id]:
+            if card_q is None or card_q < q[0, c.id]:
                 card_to_play = c
                 card_q = q[0, c.id]
+
+        self.old_observation = i
+        self.action = card_to_play.id
 
         return card_to_play
