@@ -1,5 +1,12 @@
 import logging
 import random
+import keras
+import numpy as np
+from keras.models import Sequential
+from keras.layers import Dense, Activation
+from keras.regularizers import l2
+from keras.optimizers import SGD
+from keras.utils import np_utils
 
 from elbotto.basebot import BaseBot, DEFAULT_TRUMPF
 
@@ -47,6 +54,21 @@ class PlayStrategy(object):
     def __init__(self):
         self.geschoben = False
         self.cardsAtTable = []
+        self.epsilon = 0.1
+
+        self.q_model = self.define_model()
+
+    @staticmethod
+    def define_model():
+        q_model = Sequential()
+        q_model.add(Dense(38, input_shape=(42,), kernel_initializer='uniform'))
+        q_model.add(keras.layers.normalization.BatchNormalization())
+        q_model.add(Activation("relu"))
+        q_model.add(Dense(36, kernel_regularizer=l2(0.01)))
+        sgd = SGD(lr=0.005)
+        q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
+
+        return q_model
 
     def choose_trumpf(self, hand_cards):
         inputs = [0] * 36
@@ -62,19 +84,25 @@ class PlayStrategy(object):
         return DEFAULT_TRUMPF
 
     def choose_card(self, hand_cards, table_cards, game_type):
+        idx = random.randint(0, len(hand_cards)-1)
+        card_to_play = hand_cards[idx]
+
+        if random.random() > self.epsilon:
+            card_to_play = self.model_choose_card(game_type, hand_cards, table_cards)
+
+        return card_to_play
+
+    def model_choose_card(self, game_type, hand_cards, table_cards):
         # 36 Inputs (one per card).
         # Status: 0 - no info, 1 - in hand, 2 - first card on table, 3 - second card on table, 4 - third card on table
 
-        inputs = [0] * 42
-
+        inputs = np.zeros((42,))
         for card in hand_cards:
             inputs[card.id] = 1
-
         for x in range(0, len(table_cards)):
             c = table_cards[x]
             c = card.create(c["number"], c["color"])
             inputs[c.id] = x + 2
-
         if game_type.mode == "TRUMPF":
             inputs[game_type.trumpf_color.value + 36] = 1
 
@@ -83,27 +111,13 @@ class PlayStrategy(object):
 
         elif game_type.mode == "OBEABE":
             inputs[41] = 1
+        i = np.reshape(inputs, (1, 42))
+        q = self.q_model.predict(i)
+        card_to_play = hand_cards[0]
+        card_q = 0
+        for c in hand_cards:
+            if card_q < q[0, c.id]:
+                card_to_play = c
+                card_q = q[0, c.id]
 
-        # CHALLENGE2017: Implement logic to choose card so your bot will beat all the others.
-        # Keep in mind that your counterpart is another instance of your bot
-        valid_cards = self.get_possible_cards(hand_cards, table_cards)
-
-        idx = random.randint(0, len(valid_cards)-1)
-
-        card = valid_cards[idx]
-        logger.debug("Chosen card: %s", card)
-        return card
-
-    def get_possible_cards(self, hand_cards, table_cards):
-        # validation = Validation.create(self.gameType.mode, self.gameType.trumpfColor)
-        # possibleCards = handCards.filter(function (card) {
-        #     if (validation.validate(tableCards, handCards, card)) {
-        #         return true
-        #     }
-        # }, this)
-
-        # return possibleCards
-        return hand_cards
-
-    # def setValidation(self, gameMode, trumpfColor):
-    #     self.validation = Validation.create(gameMode, trumpfColor)
+        return card_to_play
