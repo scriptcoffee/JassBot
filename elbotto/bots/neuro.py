@@ -150,7 +150,7 @@ class PlayStrategy(object):
         elif game_type.mode == "OBEABE":
             inputs[40] = 1
 
-        elif game_type.mode == "OBEABE":
+        elif game_type.mode == "UNDEUFE":
             inputs[41] = 1
 
         i = np.reshape(inputs, (1, 42))
