@@ -1,1 +1,3 @@
+keras
+numpy
 websocket-client
