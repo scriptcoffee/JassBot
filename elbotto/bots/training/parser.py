@@ -1,10 +1,9 @@
-import json
 import glob
+import json
 
-from enum import Enum
-from elbotto.card import Card as CardClass
-
-from elbotto.bots import training_network as trainnet
+from elbotto.bots.training import training_network as trainnet
+from elbotto.bots.training.card_parser import Card_Parser
+from elbotto.bots.training.trumpf_converter import Message, Trumpf_Color
 
 
 def start_training():
@@ -113,80 +112,6 @@ def start_training():
                         # call BotNetwork with hand, cards from table, trumpf and the list of all targets
                     network.train_the_model(hand_list, table_list, trumpf_list, target_list)
 
-
-class Trumpf(Enum):
-    HEARTS = 0
-    DIAMONDS = 1
-    CLUBS = 2
-    SPADES = 3
-
-
-class Message(object):
-
-    def __init__(self, card_type, trumpf_code):
-        self.trumpf_code = trumpf_code
-        self.mode = ""
-        self.trumpf_color = card_type
-
-    def trumpf_parser(self):
-        if self.trumpf_code < 4:
-            self.mode = "TRUMPF"
-            if self.trumpf_code == 0:
-                self.trumpf_color.name = Trumpf.DIAMONDS.name
-                self.trumpf_color.value = Trumpf.DIAMONDS.value
-            if self.trumpf_code == 1:
-                self.trumpf_color.name = Trumpf.HEARTS.name
-                self.trumpf_color.value = Trumpf.HEARTS.value
-            if self.trumpf_code == 2:
-                self.trumpf_color.name = Trumpf.SPADES.name
-                self.trumpf_color.value = Trumpf.SPADES.value
-            if self.trumpf_code == 3:
-                self.trumpf_color.name = Trumpf.CLUBS.name
-                self.trumpf_color.value = Trumpf.CLUBS.value
-        if self.trumpf_code == 4:
-            self.mode = "OBEABE"
-        if self.trumpf_code == 5:
-            self.mode = "UNDEUFE"
-        return self
-
-class Card_Parser(CardClass):
-
-    def __init__(self, number, color):
-        super(Card_Parser, self).__init__(number, color)
-
-    @staticmethod
-    def create_card(input):
-        color = input[0]
-        if color == "H":
-            color = "HEARTS"
-        if color == "D":
-            color = "DIAMONDS"
-        if color == "C":
-            color = "CLUBS"
-        if color == "S":
-            color = "SPADES"
-
-        if input[1:] == "A":
-            number = 14
-        elif input[1:] == "K":
-            number = 13
-        elif input[1:] == "Q":
-            number = 12
-        elif input[1:] == "J":
-            number = 11
-        else:
-            number = int(input[1:])
-
-        return Card_Parser(number, color)
-
-
-
-
-class Trumpf_Color(object):
-
-    def __init__(self, color="", code=0):
-        self.name = color
-        self.value = code
 
 if __name__ == '__main__':
     start_training()
