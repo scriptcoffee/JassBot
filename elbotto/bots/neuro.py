@@ -7,7 +7,6 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.regularizers import l2
 from keras.optimizers import SGD
-from keras.utils import np_utils
 
 from elbotto.basebot import BaseBot, DEFAULT_TRUMPF
 
@@ -35,6 +34,7 @@ class Bot(BaseBot):
 
     def handle_stich(self, winner, round_points, total_points):
         won_stich = self.in_my_team(winner)
+        self.game_strategy.stich_reward(round_points)
         logger.debug("Stich: Won:%s, Winner: %s, Round points: %s, Total points: %s", won_stich, winner, round_points, total_points)
 
     def handle_reject_card(self, card):
@@ -53,15 +53,16 @@ class Bot(BaseBot):
         card = self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type)
         return card
 
-    def handle_stich(self, winner, round_points, total_points):
-        self.game_strategy.stich_reward(round_points)
-
     def handle_game_finished(self):
         super(Bot, self).handle_game_finished()
         self.game_strategy.game_finished()
 
 
 class PlayStrategy(object):
+    INPUT_LAYER = 150
+    FIRST_LAYER = 200
+    SECOND_LAYER = 100
+    OUTPUT_LAYER = 36
 
     def __init__(self):
         self.geschoben = False
@@ -84,13 +85,15 @@ class PlayStrategy(object):
         self.old_observation = None
         self.action = None
 
-    @staticmethod
-    def define_model():
+    def define_model(self):
         q_model = Sequential()
-        q_model.add(Dense(38, input_shape=(42,), kernel_initializer='uniform'))
+        q_model.add(Dense(self.FIRST_LAYER, input_shape=(self.INPUT_LAYER,), kernel_initializer='uniform'))
         q_model.add(keras.layers.normalization.BatchNormalization())
         q_model.add(Activation("relu"))
-        q_model.add(Dense(36, kernel_regularizer=l2(0.01)))
+        q_model.add(Dense(self.SECOND_LAYER, kernel_initializer='uniform'))
+        q_model.add(keras.layers.normalization.BatchNormalization())
+        q_model.add(Activation("relu"))
+        q_model.add(Dense(self.OUTPUT_LAYER, kernel_regularizer=l2(0.01)))
         sgd = SGD(lr=0.005)
         q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
 
@@ -131,29 +134,32 @@ class PlayStrategy(object):
         self.replay()
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
-        # 36 Inputs (one per card).
-        # Status: 0 - no info, 1 - in hand, 2 - first card on table, 3 - second card on table, 4 - third card on table
+        # 4 x 36 Inputs (one per card per status).
+        #   0 -  35 : cards on hand
+        #  36 -  71 : first card played
+        #  72 - 107 : second card played
+        # 108 - 143 : third card played
 
-        inputs = np.zeros((42,))
+        trumpf_offset = self.INPUT_LAYER - 6
 
+        inputs = np.zeros((self.INPUT_LAYER,))
         for card in hand_cards:
             inputs[card.id] = 1
 
         for x in range(0, len(table_cards)):
             c = table_cards[x]
             c = card.create(c["number"], c["color"])
-            inputs[c.id] = x + 2
+            input_index = (x+1) * 36 + c.id
+            inputs[input_index] = 1
 
         if game_type.mode == "TRUMPF":
-            inputs[game_type.trumpf_color.value + 36] = 1
-
+            inputs[game_type.trumpf_color.value + trumpf_offset] = 1
         elif game_type.mode == "OBEABE":
-            inputs[40] = 1
-
+            inputs[trumpf_offset + 4] = 1
         elif game_type.mode == "UNDEUFE":
-            inputs[41] = 1
+            inputs[trumpf_offset + 5] = 1
 
-        i = np.reshape(inputs, (1, 42))
+        i = np.reshape(inputs, (1, self.INPUT_LAYER))
 
         if self.old_observation is not None and self.action is not None and self.reward is not None:
             self.memory.append((self.old_observation, self.action, self.reward, i, 0))
