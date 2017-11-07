@@ -45,3 +45,8 @@ output/*/index.html
 docs/_build
 
 .idea/*
+
+# Training data, logs and config
+elbotto/bots/training/config/*
+elbotto/bots/training/data/*
+elbotto/bots/training/logs/*
