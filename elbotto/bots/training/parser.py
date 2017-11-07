@@ -1,16 +1,18 @@
 import glob
 import json
 
+from keras import backend as k
+
 from elbotto.bots.training import training_network as trainnet
-from elbotto.bots.training.card_parser import Card_Parser
-from elbotto.bots.training.trumpf_converter import Message, Trumpf_Color
+from elbotto.bots.training.cardparser import CardParser
+from elbotto.bots.training.trumpf_converter import Message, TrumpfColor
 
 
 def start_training():
     # create an instance of the model to want to train
     network = trainnet.Training("Supervised_Network")
     # Import and validate all dates
-    files = glob.glob('C:\Programming\BA\ExterneLogfiles\sl\Logs\*.txt')
+    files = glob.glob('./data/*.txt')
     for file_path in files:
         print(file_path)
 
@@ -21,12 +23,10 @@ def start_training():
             game = line[43:]
             rounds = json.loads(game)
 
-            #print(rounds)
             print("Game: " + str(line))
 
             amount_rounds = len(rounds['rounds'])
             amount_players = len(rounds['rounds'][0]['player'])
-            print(amount_players)
 
             for i in range(amount_rounds):
 
@@ -46,21 +46,27 @@ def start_training():
                     if 'hand' not in rounds['rounds'][i]['player'][player]:
                         # print("Round has no hands, so we skip it")
                         break
-                    table.insert(player, rounds['rounds'][i]['player'][player]['hand'])
+                    dealer_gift = rounds['rounds'][i]['player'][player]['hand']
+                    player_cards = []
+                    for c in dealer_gift:
+                        player_cards.append(CardParser.create_card(c))
+                    table.insert(player, player_cards)
 
                 trumpf = rounds['rounds'][i]['trump']
-                card_type = Trumpf_Color()
+                card_type = TrumpfColor()
                 trumpf_message = Message(card_type, int(trumpf))
                 game_type = trumpf_message.trumpf_parser()
                 amount_stich = len(rounds['rounds'][i]['tricks'])
-                print(amount_stich)
+
+                if amount_stich == 0:
+                    break
                 for stich in range(amount_stich):
                     current_player = int(rounds['rounds'][i]['tricks'][stich]['first'])
                     for player_seat in range(amount_players):
                         played_card = rounds['rounds'][i]['tricks'][stich]['cards'][player_seat]
-                        card = Card_Parser.create_card(played_card)
+                        card = CardParser.create_card(played_card)
                         table[current_player].append(card)
-                        current_player = (current_player + 1) % amount_players
+                        current_player = (current_player - 1) % amount_players
 
                 # Round complete with all hand cards for all players and trump
                 print("trumpf: " + str(game_type.mode))
@@ -71,7 +77,7 @@ def start_training():
 
                 for learning_player in range(amount_players):
 
-                    print("learning player: " + str(learning_player))
+                    # print("learning player: " + str(learning_player))
 
                     table_list = []
                     hand_list = []
@@ -84,21 +90,20 @@ def start_training():
                         print("Stich: " + str(rounds['rounds'][i]['tricks'][stich]))
                         current_player = int(rounds['rounds'][i]['tricks'][stich]['first'])
 
-                        print("current Player: " + str(current_player))
+                        # print("current Player: " + str(current_player))
                         player_seat = 0
 
                         while current_player != learning_player:
                             played_card = rounds['rounds'][i]['tricks'][stich]['cards'][player_seat]
-                            card = Card_Parser.create_card(played_card)
+                            card = CardParser.create_card(played_card)
 
                             cards_on_table.insert(player_seat, card)
 
-                            current_player = (current_player + (amount_players - 1)) % amount_players
+                            current_player = (current_player - 1) % amount_players
                             player_seat += 1
 
-                        target = rounds['rounds'][i]['tricks'][stich]['cards'][learning_player]
-                        print("Target from learning player: " + str(target))
-                        target_card = Card_Parser.create_card(target)
+                        target = rounds['rounds'][i]['tricks'][stich]['cards'][player_seat]
+                        target_card = CardParser.create_card(target)
 
                         print("Cards on table: " + str(cards_on_table))
                         table_list.append(cards_on_table)
@@ -109,8 +114,14 @@ def start_training():
                         print("Target: " + str(target_card))
                         target_list.append(target_card)
 
-                        # call BotNetwork with hand, cards from table, trumpf and the list of all targets
+                    # call BotNetwork with hand, cards from table, trumpf and the list of all targets
                     network.train_the_model(hand_list, table_list, trumpf_list, target_list)
+
+    network.save_model("./config/game_network_model.h5")
+    network.save_model("./config/game_network_model.json", True)
+    network.save_weights("./config/game_network_weights.h5")
+
+    k.clear_session()
 
 
 if __name__ == '__main__':

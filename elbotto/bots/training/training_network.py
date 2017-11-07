@@ -1,5 +1,6 @@
 import keras
 import numpy as np
+from json import dump
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.regularizers import l2
@@ -7,11 +8,13 @@ from keras.optimizers import SGD
 
 
 class Training(object):
-
     def __init__(self, name):
         self.name = name
         self.q_model = self.define_model()
-
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=9,
+                                                       write_graph=True, write_grads=True, write_images=False,
+                                                       embeddings_freq=0, embeddings_layer_names=None,
+                                                       embeddings_metadata=None)
 
     @staticmethod
     def define_model():
@@ -22,11 +25,25 @@ class Training(object):
         q_model.add(Dense(36, kernel_regularizer=l2(0.01)))
         sgd = SGD(lr=0.005)
         q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
-
         return q_model
 
+    def save_weights(self, path):
+        self.q_model.save_weights(path)
+        return print("The weights of your model saved.")
 
-    def create_input(self, hand_cards, table_cards, game_type):
+    def save_model(self, path, json=False):
+        if json:
+            model_json = self.q_model.to_json()
+            with open(path, 'w') as f:
+                dump(model_json, f)
+            save_type = 'json'
+        else:
+            self.q_model.save(path)
+            save_type = 'h5'
+        return print("The model saved as " + save_type + ".")
+
+    @staticmethod
+    def create_input(hand_cards, table_cards, game_type):
         # 36 Inputs (one per card).
         # Status: 0 - no info, 1 - in hand, 2 - first card on table, 3 - second card on table, 4 - third card on table
         inputs = np.zeros((42,))
@@ -44,12 +61,11 @@ class Training(object):
         return np.reshape(inputs, (1, 42))
 
     @staticmethod
-    def create_target(self, target_card):
+    def create_target(target_card):
         # one item from input convert to a 36 output matrix for learning about differenz cards
         comparison_list = np.zeros((36,))
         comparison_list[target_card.id] = 1
         return np.reshape(comparison_list, (1, 36))
-
 
     def train_the_model(self, hand_list, table_list, trumpf_list, target_list):
         x = np.zeros((np.array(hand_list).shape[0], 42))
@@ -59,9 +75,10 @@ class Training(object):
         for i in range(len(hand_list)):
             input_list.append(self.create_input(hand_list[i], table_list[i], trumpf_list[i]))
             target_layer.append(self.create_target(target_list[i]))
-        x[:,:] = input_list
-        y[:,:] = target_layer
+
+        x[:, :] = input_list
+        y[:, :] = target_layer
         print("Input-Layer: " + str(x))
         print("Output-Layer: " + str(y))
-        self.q_model.fit(x, y)
+        self.q_model.fit(x, y, validation_split=0.1, verbose=0, callbacks=[self.tb_callback])
         print("One Training-Part are finished!")

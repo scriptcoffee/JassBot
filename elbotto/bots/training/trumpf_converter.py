@@ -37,7 +37,7 @@ class Message(object):
         return self
 
 
-class Trumpf_Color(object):
+class TrumpfColor(object):
 
     def __init__(self, color="", code=0):
         self.name = color
