@@ -43,6 +43,7 @@ class Training(object):
             inputs[41] = 1
         return np.reshape(inputs, (1, 42))
 
+    @staticmethod
     def create_target(self, target_card):
         # one item from input convert to a 36 output matrix for learning about differenz cards
         comparison_list = np.zeros((36,))

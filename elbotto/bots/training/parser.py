@@ -62,7 +62,7 @@ def start_training():
                         table[current_player].append(card)
                         current_player = (current_player + 1) % amount_players
 
-                # Round completet with all hand cards for all players and trump
+                # Round complete with all hand cards for all players and trump
                 print("trumpf: " + str(game_type.mode))
                 print("player0: " + str(table[0]))
                 print("player1: " + str(table[1]))
@@ -84,7 +84,7 @@ def start_training():
                         print("Stich: " + str(rounds['rounds'][i]['tricks'][stich]))
                         current_player = int(rounds['rounds'][i]['tricks'][stich]['first'])
 
-                        print("aktueller Spieler: " + str(current_player))
+                        print("current Player: " + str(current_player))
                         player_seat = 0
 
                         while current_player != learning_player:
