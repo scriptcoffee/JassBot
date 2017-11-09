@@ -1,6 +1,7 @@
 import glob
 import json
 
+from datetime import datetime
 from keras import backend as k
 
 from elbotto.bots.training import training_network as trainnet
@@ -13,6 +14,7 @@ def start_training():
     network = trainnet.Training("Supervised_Network")
     # Import and validate all dates
     files = glob.glob('./data/*.txt')
+    file_number = 0
     for file_path in files:
         print(file_path)
 
@@ -116,10 +118,12 @@ def start_training():
 
                     # call BotNetwork with hand, cards from table, trumpf and the list of all targets
                     network.train_the_model(hand_list, table_list, trumpf_list, target_list)
+        file_addition = str(file_number) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
+        network.save_model("./config/game_network_model_" + file_addition + ".h5")
+        network.save_model("./config/game_network_model_" + file_addition + ".json", True)
+        network.save_weights("./config/game_network_weights_" + file_addition + ".h5")
 
-    network.save_model("./config/game_network_model.h5")
-    network.save_model("./config/game_network_model.json", True)
-    network.save_weights("./config/game_network_weights.h5")
+        file_number += 1
 
     k.clear_session()
 

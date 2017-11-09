@@ -1,5 +1,7 @@
 import keras
 import numpy as np
+import tensorflow as tf
+from keras import backend as k
 from json import dump
 from keras.models import Sequential
 from keras.layers import Dense, Activation
@@ -10,9 +12,15 @@ from keras.optimizers import SGD
 class Training(object):
     def __init__(self, name):
         self.name = name
+
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = 0.4
+        sess = tf.Session(config=config)
+        k.set_session(sess)
+
         self.q_model = self.define_model()
         self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=9,
-                                                       write_graph=True, write_grads=True, write_images=False,
+                                                       write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
 
