@@ -62,8 +62,7 @@ class Bot(BaseBot):
 
 class PlayStrategy(object):
     INPUT_LAYER = 150
-    FIRST_LAYER = 200
-    SECOND_LAYER = 100
+    FIRST_LAYER = 50
     OUTPUT_LAYER = 36
 
     def __init__(self):
@@ -91,9 +90,6 @@ class PlayStrategy(object):
     def define_model(self):
         q_model = Sequential()
         q_model.add(Dense(self.FIRST_LAYER, input_shape=(self.INPUT_LAYER,), kernel_initializer='uniform'))
-        q_model.add(keras.layers.normalization.BatchNormalization())
-        q_model.add(Activation("relu"))
-        q_model.add(Dense(self.SECOND_LAYER, kernel_initializer='uniform'))
         q_model.add(keras.layers.normalization.BatchNormalization())
         q_model.add(Activation("relu"))
         q_model.add(Dense(self.OUTPUT_LAYER, kernel_regularizer=l2(0.01)))
