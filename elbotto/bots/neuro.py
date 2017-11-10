@@ -2,6 +2,7 @@ import logging
 import random
 import keras
 import numpy as np
+import tensorflow as tf
 from datetime import datetime
 from json import dump
 from collections import deque
@@ -75,6 +76,11 @@ class PlayStrategy(object):
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
         self.batch_size = 32
+
+        config = tf.ConfigProto()
+        config.gpu_options.per_process_gpu_memory_fraction = 0.4
+        sess = tf.Session(config=config)
+        keras.set_session(sess)
 
         self.reset_tmp_memory()
 
