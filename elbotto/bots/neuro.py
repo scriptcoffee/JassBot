@@ -1,6 +1,7 @@
 import logging
 import random
 import keras
+import time
 import numpy as np
 import tensorflow as tf
 from datetime import datetime
@@ -87,6 +88,10 @@ class PlayStrategy(object):
         self.memory = deque(maxlen=50000)
 
         self.q_model = self.define_model()
+        self.time = time.time()
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=32, write_graph=False,
+                                    write_grads=True, write_images=False, embeddings_freq=0,
+                                    embeddings_layer_names=None, embeddings_metadata=None)
 
     def reset_tmp_memory(self):
         self.reward = None
@@ -210,6 +215,20 @@ class PlayStrategy(object):
             return 0
 
         minibatch = random.sample(self.memory, self.batch_size)
+
+        state, action, reward, next_state, done = random.sample(self.memory, 1)[0]
+        target = reward
+        if not done:
+            target = (reward + self.gamma *
+                      np.amax(self.q_model.predict(next_state)[0]))
+        target_f = self.q_model.predict(state)
+        target_f[0][action] = target
+
+        val_data = (state, target_f)
+
+        states = np.zeros((self.batch_size, self.INPUT_LAYER))
+        targets = np.zeros((self.batch_size, self.OUTPUT_LAYER))
+        index = 0
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
@@ -217,7 +236,14 @@ class PlayStrategy(object):
                           np.amax(self.q_model.predict(next_state)[0]))
             target_f = self.q_model.predict(state)
             target_f[0][action] = target
-            history = self.q_model.fit(state, target_f, epochs=1, verbose=0)
+
+            states[index] = state
+            targets[index] = target_f
+            index += 1
+
+        history = self.q_model.fit(states, targets, epochs=5, verbose=0, validation_data=val_data, callbacks=[self.tb_callback])
+        print(time.time() - self.time)
+        self.time = time.time()
 
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
