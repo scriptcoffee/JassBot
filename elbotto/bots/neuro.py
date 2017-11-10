@@ -2,6 +2,8 @@ import logging
 import random
 import keras
 import numpy as np
+from datetime import datetime
+from json import dump
 from collections import deque
 from keras.models import Sequential
 from keras.layers import Dense, Activation
@@ -67,6 +69,7 @@ class PlayStrategy(object):
     def __init__(self):
         self.geschoben = False
         self.cardsAtTable = []
+        self.game_counter = 1
 
         self.gamma = 0.95
         self.epsilon = 0.6
@@ -98,6 +101,21 @@ class PlayStrategy(object):
         q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
 
         return q_model
+
+    def save_weights(self, path):
+        self.q_model.save_weights(path)
+        return print("The weights of your model saved.")
+
+    def save_model(self, path, json=False):
+        if json:
+            model_json = self.q_model.to_json()
+            with open(path, 'w') as f:
+                dump(model_json, f)
+            save_type = 'json'
+        else:
+            self.q_model.save(path)
+            save_type = 'h5'
+        return print("The model saved as " + save_type + ".")
 
     def choose_trumpf(self, hand_cards):
         inputs = [0] * 36
@@ -132,6 +150,12 @@ class PlayStrategy(object):
         self.memory.append((self.old_observation, self.action, self.reward, None, 1))
         self.reset_tmp_memory()
         self.replay()
+        if self.game_counter % 1000:
+            file_addition = str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
+            self.save_model("./logs/config/game_network_model_" + file_addition + ".h5")
+            self.save_model("./logs/config/game_network_model_" + file_addition + ".json", True)
+            self.save_weights("./logs/config/game_network_weights_" + file_addition + ".h5")
+        self.game_counter += 1
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
         # 4 x 36 Inputs (one per card per status).
