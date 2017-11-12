@@ -4,6 +4,7 @@ import keras
 import time
 import numpy as np
 import tensorflow as tf
+from keras import backend as k
 from datetime import datetime
 from json import dump
 from collections import deque
@@ -81,13 +82,14 @@ class PlayStrategy(object):
         config = tf.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = 0.4
         sess = tf.Session(config=config)
-        keras.set_session(sess)
+        k.set_session(sess)
 
         self.reset_tmp_memory()
 
         self.memory = deque(maxlen=50000)
 
         self.q_model = self.define_model()
+        self.save_weights_and_model()
         self.time = time.time()
         self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=32, write_graph=False,
                                     write_grads=True, write_images=False, embeddings_freq=0,
@@ -157,12 +159,15 @@ class PlayStrategy(object):
         self.memory.append((self.old_observation, self.action, self.reward, None, 1))
         self.reset_tmp_memory()
         self.replay()
-        if self.game_counter % 1000:
-            file_addition = str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-            self.save_model("./logs/config/game_network_model_" + file_addition + ".h5")
-            self.save_model("./logs/config/game_network_model_" + file_addition + ".json", True)
-            self.save_weights("./logs/config/game_network_weights_" + file_addition + ".h5")
+        if (self.game_counter % 1000) == 0:
+            self.save_weights_and_model()
         self.game_counter += 1
+
+    def save_weights_and_model(self):
+        file_addition = str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
+        self.save_model("./logs/config/game_network_model_" + file_addition + ".h5")
+        self.save_model("./logs/config/game_network_model_" + file_addition + ".json", True)
+        self.save_weights("./logs/config/game_network_weights_" + file_addition + ".h5")
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
         # 4 x 36 Inputs (one per card per status).
