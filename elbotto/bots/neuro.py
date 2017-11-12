@@ -150,10 +150,10 @@ class PlayStrategy(object):
         return card_to_play
 
     def card_rejected(self):
-        self.reward = CARD_REJECTED_PENALTY
+        self.reward = CARD_REJECTED_PENALTY / 100
 
     def stich_reward(self, round_points):
-        self.reward = round_points
+        self.reward = round_points / 100
 
     def game_finished(self):
         self.memory.append((self.old_observation, self.action, self.reward, None, 1))
