@@ -12,6 +12,7 @@ from keras.optimizers import SGD
 class Training(object):
     def __init__(self, name):
         self.name = name
+        self.game_counter = 0
 
         config = tf.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = 0.4
@@ -19,7 +20,7 @@ class Training(object):
         k.set_session(sess)
 
         self.q_model = self.define_model()
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=9,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=64,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
@@ -27,7 +28,7 @@ class Training(object):
     @staticmethod
     def define_model():
         q_model = Sequential()
-        q_model.add(Dense(38, input_shape=(42,), kernel_initializer='uniform'))
+        q_model.add(Dense(50, input_shape=(150,), kernel_initializer='uniform'))
         q_model.add(keras.layers.normalization.BatchNormalization())
         q_model.add(Activation("relu"))
         q_model.add(Dense(36, kernel_regularizer=l2(0.01)))
@@ -52,21 +53,22 @@ class Training(object):
 
     @staticmethod
     def create_input(hand_cards, table_cards, game_type):
-        # 36 Inputs (one per card).
-        # Status: 0 - no info, 1 - in hand, 2 - first card on table, 3 - second card on table, 4 - third card on table
-        inputs = np.zeros((42,))
+        # 150 Inputs (4 x 36 possible cards per hand and 6 trumpf variations).
+        # Partitional: 1-36 -> hand, 37-72 - first card on table, 73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
+        # Status: 0 - no info, 1 - know place of the card
+        inputs = np.zeros((150,))
         for card in hand_cards:
             inputs[card.id] = 1
         for x in range(0, len(table_cards)):
             c = table_cards[x]
-            inputs[c.id] = x + 2
+            inputs[c.id + (x + 1)*36] = 1
         if game_type.mode == "TRUMPF":
-            inputs[game_type.trumpf_color.value + 36] = 1
+            inputs[game_type.trumpf_color.value + 4 * 36] = 1
         elif game_type.mode == "OBEABE":
-            inputs[40] = 1
+            inputs[148] = 1
         elif game_type.mode == "UNDEUFE":
-            inputs[41] = 1
-        return np.reshape(inputs, (1, 42))
+            inputs[149] = 1
+        return np.reshape(inputs, (1, 150))
 
     @staticmethod
     def create_target(target_card):
@@ -76,7 +78,7 @@ class Training(object):
         return np.reshape(comparison_list, (1, 36))
 
     def train_the_model(self, hand_list, table_list, trumpf_list, target_list):
-        x = np.zeros((np.array(hand_list).shape[0], 42))
+        x = np.zeros((np.array(hand_list).shape[0], 150))
         y = np.zeros((np.array(target_list).shape[0], 36))
         input_list = []
         target_layer = []
@@ -88,5 +90,11 @@ class Training(object):
         y[:, :] = target_layer
         print("Input-Layer: " + str(x))
         print("Output-Layer: " + str(y))
-        self.q_model.fit(x, y, validation_split=0.1, verbose=0, callbacks=[self.tb_callback])
+        if self.game_counter % 1000 == 0:
+            self.q_model.fit(x, y, validation_split=0.1, verbose=1, callbacks=[self.tb_callback])
+        if len(y) > 1:
+            self.q_model.fit(x, y, validation_split=0.1, verbose=1)
+        else:
+            self.q_model.fit(x, y, verbose=1)
+        self.game_counter += 1
         print("One Training-Part are finished!")
