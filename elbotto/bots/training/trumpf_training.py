@@ -1,47 +1,29 @@
 import keras
 import numpy as np
-from json import dump
 from keras.models import Sequential
 from keras.layers import Dense, Activation
 from keras.regularizers import l2
 from keras.optimizers import SGD
+from elbotto.bots.training.training import Training
 
 
-class Training(object):
-
+class TrumpfTraining(Training):
     def __init__(self, name):
-        self.name = name
-        self.t_model = self.define_model()
+        super().__init__(name)
+
         self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=12,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
 
-    @staticmethod
-    def define_model():
-        t_model = Sequential()
-        t_model.add(Dense(36, input_shape=(36,), kernel_initializer='uniform'))
-        t_model.add(keras.layers.normalization.BatchNormalization())
-        t_model.add(Activation("relu"))
-        t_model.add(Dense(6, kernel_regularizer=l2(0.01)))
+    def define_model(self):
+        self.q_model = Sequential()
+        self.q_model.add(Dense(36, input_shape=(36,), kernel_initializer='uniform'))
+        self.q_model.add(keras.layers.normalization.BatchNormalization())
+        self.q_model.add(Activation("relu"))
+        self.q_model.add(Dense(6, kernel_regularizer=l2(0.01)))
         sgd = SGD(lr=0.005)
-        t_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
-        return t_model
-
-    def save_weights(self, path):
-        self.t_model.save_weights(path)
-        return print("The weights of your model saved.")
-
-    def save_model(self, path, json=False):
-        if json:
-            model_json = self.t_model.to_json()
-            with open(path, 'w') as f:
-                dump(model_json, f)
-            save_type = 'json'
-        else:
-            self.t_model.save(path)
-            save_type = 'h5'
-        return print("The model saved as " + save_type + ".")
+        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
 
     @staticmethod
     def create_input(start_handcards):
@@ -68,16 +50,16 @@ class Training(object):
         x = np.zeros((np.array(start_handcards).shape[0], 36))
         y = np.zeros((np.array(trumpf).shape[0], 6))
         input_list = []
-        output_list = []
+        target_list = []
         print("Start_Handcards: " + str(start_handcards))
         for i in range(len(start_handcards)):
             input_list.append(self.create_input(start_handcards[i]))
-            output_list.append(self.create_target(trumpf[i]))
+            target_list.append(self.create_target(trumpf[i]))
         print(input_list)
-        print(output_list)
+        print(target_list)
         x[:, :] = input_list
-        y[:, :] = output_list
+        y[:, :] = target_list
         print("Input: " + str(x))
         print("Output: " + str(y))
-        self.t_model.fit(x, y, validation_split=0.3, callbacks=[self.tb_callback])
+        self.q_model.fit(x, y, validation_split=0.3, callbacks=[self.tb_callback])
         print("Learning Trumpf!")
