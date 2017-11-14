@@ -90,10 +90,10 @@ class Training(object):
         y[:, :] = target_layer
         print("Input-Layer: " + str(x))
         print("Output-Layer: " + str(y))
-        if self.game_counter % 1000 == 0:
-            self.q_model.fit(x, y, validation_split=0.1, verbose=1, callbacks=[self.tb_callback])
         if len(y) > 1:
             self.q_model.fit(x, y, validation_split=0.1, verbose=1)
+            if self.game_counter % 1000 == 0:
+                self.q_model.fit(x, y, validation_split=0.1, verbose=1, callbacks=[self.tb_callback])
         else:
             self.q_model.fit(x, y, verbose=1)
         self.game_counter += 1
