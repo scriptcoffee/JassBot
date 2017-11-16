@@ -22,8 +22,9 @@ class TrumpfTraining(Training):
         self.q_model.add(keras.layers.normalization.BatchNormalization())
         self.q_model.add(Activation("relu"))
         self.q_model.add(Dense(6, kernel_regularizer=l2(0.01)))
+        self.q_model.add(Activation("softmax"))
         sgd = SGD(lr=0.005)
-        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
+        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error','acc'])
 
     @staticmethod
     def create_input(start_handcards):
