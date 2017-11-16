@@ -4,16 +4,18 @@ import keras
 import time
 import numpy as np
 import tensorflow as tf
+from elbotto.messages import GameType
+from elbotto.card import Card, Color
 from keras import backend as k
+from keras.layers import Input, Dense, BatchNormalization
+from keras.models import Model
 from datetime import datetime
 from json import dump
 from collections import deque
-from keras.models import Sequential
-from keras.layers import Dense, Activation
 from keras.regularizers import l2
 from keras.optimizers import SGD
 
-from elbotto.basebot import BaseBot, DEFAULT_TRUMPF
+from elbotto.basebot import BaseBot
 
 logger = logging.getLogger(__name__)
 
@@ -55,15 +57,18 @@ class Bot(BaseBot):
 
     def handle_request_card(self, table_cards):
         # CHALLENGE2017: Ask the brain which card to choose
-        card = self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type)
-        return card
+        return self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type)
 
-    def handle_game_finished(self):
-        super(Bot, self).handle_game_finished()
-        self.game_strategy.game_finished()
+    def handle_game_finished(self, current_game_points, won_stich_in_game):
+        super(Bot, self).handle_game_finished(current_game_points, won_stich_in_game)
+        self.game_strategy.game_finished(current_game_points, won_stich_in_game)
 
 
 class PlayStrategy(object):
+    TRUMPF_INPUT_LAYER = 36
+    TRUMPF_FIRST_LAYER = 36
+    TRUMPF_OUTPUT_LAYER = 7
+
     INPUT_LAYER = 150
     FIRST_LAYER = 50
     OUTPUT_LAYER = 36
@@ -77,7 +82,8 @@ class PlayStrategy(object):
         self.epsilon = 0.6
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
-        self.batch_size = 32
+        self.trumpf_batch_size = 16
+        self.batch_size = 16
 
         config = tf.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = 0.4
@@ -86,58 +92,116 @@ class PlayStrategy(object):
 
         self.reset_tmp_memory()
 
-        self.memory = deque(maxlen=50000)
+        self.trumpf_memory = deque(maxlen=50000)
+        self.game_memory = deque(maxlen=50000)
 
-        self.q_model = self.define_model()
-        self.save_weights_and_model()
+        self.define_models()
+        self.save_weights_and_models()
         self.time = time.time()
         self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=32, write_graph=False,
                                     write_grads=True, write_images=False, embeddings_freq=0,
                                     embeddings_layer_names=None, embeddings_metadata=None)
 
+    def define_models(self):
+        trumpf_input = Input(shape=(self.TRUMPF_INPUT_LAYER,), name='trumpf_input')
+        trumpf_dense_1 = Dense(self.TRUMPF_FIRST_LAYER, activation='relu', kernel_initializer='truncated_normal')(trumpf_input)
+        trumpf_batch_norm_1 = BatchNormalization()(trumpf_dense_1)
+        trumpf_dense_out = Dense(self.TRUMPF_OUTPUT_LAYER, kernel_regularizer=l2(0.01), name='trumpf_output')(trumpf_batch_norm_1)
+
+        self.trumpf_model = Model(inputs=trumpf_input, outputs=trumpf_dense_out)
+
+        game_imput = Input(shape=(self.INPUT_LAYER,), name='game_input')
+        game_dense_1 = Dense(self.FIRST_LAYER, activation='relu', kernel_initializer='truncated_normal')(game_imput)
+        game_batch_norm_1 = BatchNormalization()(game_dense_1)
+        game_dense_out = Dense(self.OUTPUT_LAYER, kernel_regularizer=l2(0.01), name='game_output')(game_batch_norm_1)
+
+        self.game_model = Model(inputs=game_imput, outputs=game_dense_out)
+
+        self.combined_model = Model(inputs=[trumpf_input, game_imput], outputs=[trumpf_dense_out, game_dense_out])
+        sgd = SGD(lr=0.001)
+        self.trumpf_model.compile(optimizer=sgd,
+                      loss='mean_squared_error',
+                      metrics=['mean_squared_error', 'accuracy'])
+        self.game_model.compile(optimizer=sgd,
+                      loss='mean_squared_error',
+                      metrics=['mean_squared_error', 'accuracy'])
+        self.combined_model.compile(optimizer=sgd,
+                      loss='mean_squared_error',
+                      metrics=['mean_squared_error', 'accuracy'])
+
     def reset_tmp_memory(self):
-        self.reward = None
-        self.old_observation = None
-        self.action = None
+        self.trumpf_reward = None
+        self.trumpf_observation = None
+        self.trumpf_action = None
 
-    def define_model(self):
-        q_model = Sequential()
-        q_model.add(Dense(self.FIRST_LAYER, input_shape=(self.INPUT_LAYER,), kernel_initializer='uniform'))
-        q_model.add(keras.layers.normalization.BatchNormalization())
-        q_model.add(Activation("relu"))
-        q_model.add(Dense(self.OUTPUT_LAYER, kernel_regularizer=l2(0.01)))
-        sgd = SGD(lr=0.005)
-        q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
+        self.game_reward = None
+        self.game_old_observation = None
+        self.game_action = None
 
-        return q_model
-
-    def save_weights(self, path):
-        self.q_model.save_weights(path)
+    @staticmethod
+    def save_weights(model, path):
+        model.save_weights(path)
         return print("The weights of your model saved.")
 
-    def save_model(self, path, json=False):
+    @staticmethod
+    def save_model(model, path, json=False):
         if json:
-            model_json = self.q_model.to_json()
+            model_json = model.to_json()
             with open(path, 'w') as f:
                 dump(model_json, f)
             save_type = 'json'
         else:
-            self.q_model.save(path)
+            model.save(path)
             save_type = 'h5'
         return print("The model saved as " + save_type + ".")
 
     def choose_trumpf(self, hand_cards):
-        inputs = [0] * 36
+        inputs = np.zeros((self.TRUMPF_INPUT_LAYER,))
 
         for c in hand_cards:
             inputs[c.id] = 1
 
-        # CHALLENGE2017: Implement logic to chose game mode which is best suited to your handcards or schiaebae.
-        # Consider that this decision ist quite crucial for your bot to be competitive
-        # Use hearts as TRUMPF for now
+        i = np.reshape(inputs, (1, self.TRUMPF_INPUT_LAYER))
+
+        q = self.trumpf_model.predict(i)
+
+        trumpf_nr = np.argmax(q)
+
+        if trumpf_nr == 0:
+            trumpf = GameType("TRUMPF", Color.HEARTS.name)
+        elif trumpf_nr == 1:
+            trumpf = GameType("TRUMPF", Color.DIAMONDS.name)
+        elif trumpf_nr == 2:
+            trumpf = GameType("TRUMPF", Color.CLUBS.name)
+        elif trumpf_nr == 3:
+            trumpf = GameType("TRUMPF", Color.SPADES.name)
+        elif trumpf_nr == 4:
+            trumpf = GameType("OBEABE")
+        else:
+            trumpf = GameType("UNDEUFE")
+
+        self.trumpf_observation = i
+        self.trumpf_action = trumpf_nr
 
         # if self.gschobe: nüme schiebe
-        return DEFAULT_TRUMPF
+        return trumpf
+
+    def replay_trumpf(self):
+        minibatch = random.sample(self.trumpf_memory, self.trumpf_batch_size)
+
+        states = np.zeros((self.trumpf_batch_size, self.TRUMPF_INPUT_LAYER))
+        targets = np.zeros((self.trumpf_batch_size, self.TRUMPF_OUTPUT_LAYER))
+
+        index = 0
+        for state, action, reward, done in minibatch:
+            target_f = self.trumpf_model.predict(state)
+            target_f[0][action] = reward
+
+            states[index] = state
+            targets[index] = target_f
+            index += 1
+
+        return states, targets
 
     def choose_card(self, hand_cards, table_cards, game_type):
 
@@ -150,24 +214,57 @@ class PlayStrategy(object):
         return card_to_play
 
     def card_rejected(self):
-        self.reward = CARD_REJECTED_PENALTY / 100
+        self.game_reward = CARD_REJECTED_PENALTY / 100
 
     def stich_reward(self, round_points):
-        self.reward = round_points / 100
+        self.game_reward = round_points / 100
 
-    def game_finished(self):
-        self.memory.append((self.old_observation, self.action, self.reward, None, 1))
+    def game_finished(self, current_game_points, won_stich_in_game):
+        if self.trumpf_observation is not None and self.trumpf_action is not None:
+            self.trumpf_memory.append((self.trumpf_observation, self.trumpf_action, (won_stich_in_game.count(1)/10), 1))
+        self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, None, 1))
         self.reset_tmp_memory()
-        self.replay()
+        self.fit_models()
         if (self.game_counter % 1000) == 0:
-            self.save_weights_and_model()
+            self.save_weights_and_models()
         self.game_counter += 1
 
-    def save_weights_and_model(self):
+    def fit_models(self):
+        if len(self.trumpf_memory) < self.trumpf_batch_size or len(self.game_memory) < self.batch_size:
+            return 0
+
+        trumpf_states, trumpf_targets = self.replay_trumpf()
+        game_states, game_targets = self.replay_games()
+
+        if (self.game_counter % 100) == 0:
+            self.combined_model.fit(x={'trumpf_input': trumpf_states, 'game_input': game_states},
+                                y={'trumpf_output': trumpf_targets, 'game_output': game_targets},
+                                epochs=5,
+                                verbose=0,
+                                validation_split=0.2,
+                                callbacks=[self.tb_callback])
+        else:
+            self.combined_model.fit(x={'trumpf_input': trumpf_states, 'game_input': game_states},
+                                y={'trumpf_output': trumpf_targets, 'game_output': game_targets},
+                                epochs=5,
+                                verbose=0,
+                                validation_split=0.2)
+
+        print(time.time() - self.time)
+        self.time = time.time()
+
+        if self.epsilon > self.epsilon_min:
+            self.epsilon *= self.epsilon_decay
+
+    def save_weights_and_models(self):
         file_addition = str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-        self.save_model("./logs/config/game_network_model_" + file_addition + ".h5")
-        self.save_model("./logs/config/game_network_model_" + file_addition + ".json", True)
-        self.save_weights("./logs/config/game_network_weights_" + file_addition + ".h5")
+        self.save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".h5")
+        self.save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".json", True)
+        self.save_weights(self.game_model, "./logs/config/game_network_weights_" + file_addition + ".h5")
+
+        self.save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".h5")
+        self.save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".json", True)
+        self.save_weights(self.trumpf_model, "./logs/config/trumpf_network_weights_" + file_addition + ".h5")
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
         # 4 x 36 Inputs (one per card per status).
@@ -179,12 +276,12 @@ class PlayStrategy(object):
         trumpf_offset = self.INPUT_LAYER - 6
 
         inputs = np.zeros((self.INPUT_LAYER,))
-        for card in hand_cards:
-            inputs[card.id] = 1
+        for c in hand_cards:
+            inputs[c.id] = 1
 
         for x in range(0, len(table_cards)):
             c = table_cards[x]
-            c = card.create(c["number"], c["color"])
+            c = Card.create(c["number"], c["color"])
             input_index = (x+1) * 36 + c.id
             inputs[input_index] = 1
 
@@ -197,10 +294,10 @@ class PlayStrategy(object):
 
         i = np.reshape(inputs, (1, self.INPUT_LAYER))
 
-        if self.old_observation is not None and self.action is not None and self.reward is not None:
-            self.memory.append((self.old_observation, self.action, self.reward, i, 0))
+        if self.game_old_observation is not None and self.game_action is not None and self.game_reward is not None:
+            self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, i, 0))
 
-        q = self.q_model.predict(i)
+        q = self.game_model.predict(i)
 
         card_to_play = hand_cards[0]
 
@@ -210,26 +307,16 @@ class PlayStrategy(object):
                 card_to_play = c
                 card_q = q[0, c.id]
 
-        self.old_observation = i
-        self.action = card_to_play.id
+
+
+
+        self.game_old_observation = i
+        self.game_action = card_to_play.id
 
         return card_to_play
 
-    def replay(self):
-        if len(self.memory) < self.batch_size:
-            return 0
-
-        minibatch = random.sample(self.memory, self.batch_size)
-
-        state, action, reward, next_state, done = random.sample(self.memory, 1)[0]
-        target = reward
-        if not done:
-            target = (reward + self.gamma *
-                      np.amax(self.q_model.predict(next_state)[0]))
-        target_f = self.q_model.predict(state)
-        target_f[0][action] = target
-
-        val_data = (state, target_f)
+    def replay_games(self):
+        minibatch = random.sample(self.game_memory, self.batch_size)
 
         states = np.zeros((self.batch_size, self.INPUT_LAYER))
         targets = np.zeros((self.batch_size, self.OUTPUT_LAYER))
@@ -238,17 +325,12 @@ class PlayStrategy(object):
             target = reward
             if not done:
                 target = (reward + self.gamma *
-                          np.amax(self.q_model.predict(next_state)[0]))
-            target_f = self.q_model.predict(state)
+                          np.amax(self.game_model.predict(next_state)[0]))
+            target_f = self.game_model.predict(state)
             target_f[0][action] = target
 
             states[index] = state
             targets[index] = target_f
             index += 1
 
-        history = self.q_model.fit(states, targets, epochs=5, verbose=0, validation_data=val_data, callbacks=[self.tb_callback])
-        print(time.time() - self.time)
-        self.time = time.time()
-
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+        return states, targets
