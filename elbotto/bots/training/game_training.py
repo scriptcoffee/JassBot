@@ -75,6 +75,6 @@ def create_input(hand_cards, table_cards, game_type):
 
 
 def create_target(target_card):
-    comparison_list = np.zeros((36,))
-    comparison_list[target_card.id] = 1
-    return np.reshape(comparison_list, (1, 36))
+    target_list = np.zeros((36,))
+    target_list[target_card.id] = 1
+    return np.reshape(target_list, (1, 36))
