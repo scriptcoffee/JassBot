@@ -39,6 +39,40 @@ def save_model(model, path, json=False):
     return print("The model saved as " + save_type + ".")
 
 
+def trumpf_hearts():
+    return GameType("TRUMPF", Color.HEARTS.name)
+
+
+def trumpf_diamonds():
+    return GameType("TRUMPF", Color.DIAMONDS.name)
+
+
+def trumpf_clubs():
+    return GameType("TRUMPF", Color.CLUBS.name)
+
+
+def trumpf_spades():
+    return GameType("TRUMPF", Color.SPADES.name)
+
+
+def obeabe():
+    return GameType("OBEABE")
+
+
+def undeufe():
+    return GameType("UNDEUFE")
+
+
+TRUMPF_DICT = {
+    0: trumpf_hearts,
+    1: trumpf_diamonds,
+    2: trumpf_clubs,
+    3: trumpf_spades,
+    4: obeabe,
+    5: undeufe
+}
+
+
 class Bot(BaseBot):
     """
     Trivial bot using DEFAULT_TRUMPF and randomly returning a card available in the hand.
@@ -84,7 +118,7 @@ class Bot(BaseBot):
 class PlayStrategy():
     TRUMPF_INPUT_LAYER = 36
     TRUMPF_FIRST_LAYER = 36
-    TRUMPF_OUTPUT_LAYER = 7
+    TRUMPF_OUTPUT_LAYER = 6
 
     INPUT_LAYER = 150
     FIRST_LAYER = 50
@@ -169,18 +203,7 @@ class PlayStrategy():
 
         trumpf_nr = np.argmax(q)
 
-        if trumpf_nr == 0:
-            trumpf = GameType("TRUMPF", Color.HEARTS.name)
-        elif trumpf_nr == 1:
-            trumpf = GameType("TRUMPF", Color.DIAMONDS.name)
-        elif trumpf_nr == 2:
-            trumpf = GameType("TRUMPF", Color.CLUBS.name)
-        elif trumpf_nr == 3:
-            trumpf = GameType("TRUMPF", Color.SPADES.name)
-        elif trumpf_nr == 4:
-            trumpf = GameType("OBEABE")
-        else:
-            trumpf = GameType("UNDEUFE")
+        trumpf = TRUMPF_DICT[trumpf_nr]()
 
         self.trumpf_observation = inputs
         self.trumpf_action = trumpf_nr
