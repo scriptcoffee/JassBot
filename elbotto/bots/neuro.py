@@ -22,6 +22,23 @@ logger = logging.getLogger(__name__)
 CARD_REJECTED_PENALTY = -100
 
 
+def save_weights(model, path):
+    model.save_weights(path)
+    return print("The weights of your model saved.")
+
+
+def save_model(model, path, json=False):
+    if json:
+        model_json = model.to_json()
+        with open(path, 'w') as f:
+            dump(model_json, f)
+        save_type = 'json'
+    else:
+        model.save(path)
+        save_type = 'h5'
+    return print("The model saved as " + save_type + ".")
+
+
 class Bot(BaseBot):
     """
     Trivial bot using DEFAULT_TRUMPF and randomly returning a card available in the hand.
@@ -64,7 +81,7 @@ class Bot(BaseBot):
         self.game_strategy.game_finished(current_game_points, won_stich_in_game)
 
 
-class PlayStrategy(object):
+class PlayStrategy():
     TRUMPF_INPUT_LAYER = 36
     TRUMPF_FIRST_LAYER = 36
     TRUMPF_OUTPUT_LAYER = 7
@@ -140,32 +157,15 @@ class PlayStrategy(object):
         self.game_old_observation = None
         self.game_action = None
 
-    @staticmethod
-    def save_weights(model, path):
-        model.save_weights(path)
-        return print("The weights of your model saved.")
-
-    @staticmethod
-    def save_model(model, path, json=False):
-        if json:
-            model_json = model.to_json()
-            with open(path, 'w') as f:
-                dump(model_json, f)
-            save_type = 'json'
-        else:
-            model.save(path)
-            save_type = 'h5'
-        return print("The model saved as " + save_type + ".")
-
     def choose_trumpf(self, hand_cards):
         inputs = np.zeros((self.TRUMPF_INPUT_LAYER,))
 
-        for c in hand_cards:
-            inputs[c.id] = 1
+        for hand_card in hand_cards:
+            inputs[hand_card.id] = 1
 
-        i = np.reshape(inputs, (1, self.TRUMPF_INPUT_LAYER))
+        inputs = np.reshape(inputs, (1, self.TRUMPF_INPUT_LAYER))
 
-        q = self.trumpf_model.predict(i)
+        q = self.trumpf_model.predict(inputs)
 
         trumpf_nr = np.argmax(q)
 
@@ -182,7 +182,7 @@ class PlayStrategy(object):
         else:
             trumpf = GameType("UNDEUFE")
 
-        self.trumpf_observation = i
+        self.trumpf_observation = inputs
         self.trumpf_action = trumpf_nr
 
         # if self.gschobe: nüme schiebe
@@ -260,54 +260,28 @@ class PlayStrategy(object):
 
     def save_weights_and_models(self):
         file_addition = str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-        self.save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".h5")
-        self.save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".json", True)
-        self.save_weights(self.game_model, "./logs/config/game_network_weights_" + file_addition + ".h5")
+        save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".h5")
+        save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".json", True)
+        save_weights(self.game_model, "./logs/config/game_network_weights_" + file_addition + ".h5")
 
-        self.save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".h5")
-        self.save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".json", True)
-        self.save_weights(self.trumpf_model, "./logs/config/trumpf_network_weights_" + file_addition + ".h5")
+        save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".h5")
+        save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".json", True)
+        save_weights(self.trumpf_model, "./logs/config/trumpf_network_weights_" + file_addition + ".h5")
 
     def model_choose_card(self, game_type, hand_cards, table_cards):
-        # 4 x 36 Inputs (one per card per status).
-        #   0 -  35 : cards on hand
-        #  36 -  71 : first card played
-        #  72 - 107 : second card played
-        # 108 - 143 : third card played
-
-        trumpf_offset = self.INPUT_LAYER - 6
-
-        inputs = np.zeros((self.INPUT_LAYER,))
-        for c in hand_cards:
-            inputs[c.id] = 1
-
-        for x in range(0, len(table_cards)):
-            c = table_cards[x]
-            c = Card.create(c["number"], c["color"])
-            input_index = (x+1) * 36 + c.id
-            inputs[input_index] = 1
-
-        if game_type.mode == "TRUMPF":
-            inputs[game_type.trumpf_color.value + trumpf_offset] = 1
-        elif game_type.mode == "OBEABE":
-            inputs[trumpf_offset + 4] = 1
-        elif game_type.mode == "UNDEUFE":
-            inputs[trumpf_offset + 5] = 1
-
-        i = np.reshape(inputs, (1, self.INPUT_LAYER))
+        inputs = self.prepare_game_input(game_type, hand_cards, table_cards)
 
         if self.game_old_observation is not None and self.game_action is not None and self.game_reward is not None:
-            self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, i, 0))
+            self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, inputs, 0))
 
-        q = self.game_model.predict(i)
+        q = self.game_model.predict(inputs)
 
         card_to_play = hand_cards[0]
-
         card_q = None
-        for c in hand_cards:
-            if card_q is None or card_q < q[0, c.id]:
-                card_to_play = c
-                card_q = q[0, c.id]
+        for hand_card in hand_cards:
+            if card_q is None or card_q < q[0, hand_card.id]:
+                card_to_play = hand_card
+                card_q = q[0, hand_card.id]
 
         card_to_play_rank = 0
         for prob in q[0]:
@@ -319,10 +293,34 @@ class PlayStrategy(object):
             self.writer.add_summary(summary, self.step)
         self.step += 1
 
-        self.game_old_observation = i
+        self.game_old_observation = inputs
         self.game_action = card_to_play.id
 
         return card_to_play
+
+    def prepare_game_input(self, game_type, hand_cards, table_cards):
+        trumpf_offset = self.INPUT_LAYER - 6
+        inputs = np.zeros((self.INPUT_LAYER,))
+
+        for hand_card in hand_cards:
+            inputs[hand_card.id] = 1
+
+        for i in range(len(table_cards)):
+            table_card = table_cards[i]
+            table_card = Card.create(table_card["number"], table_card["color"])
+            input_index = (i + 1) * 36 + table_card.id
+            inputs[input_index] = 1
+
+        if game_type.mode == "TRUMPF":
+            inputs[game_type.trumpf_color.value + trumpf_offset] = 1
+        elif game_type.mode == "OBEABE":
+            inputs[trumpf_offset + 4] = 1
+        elif game_type.mode == "UNDEUFE":
+            inputs[trumpf_offset + 5] = 1
+
+        inputs = np.reshape(inputs, (1, self.INPUT_LAYER))
+
+        return inputs
 
     def replay_games(self):
         minibatch = random.sample(self.game_memory, self.batch_size)
