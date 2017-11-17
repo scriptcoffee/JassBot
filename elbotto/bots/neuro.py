@@ -97,6 +97,8 @@ class PlayStrategy(object):
 
         self.define_models()
         self.save_weights_and_models()
+        self.writer = tf.summary.FileWriter('./logs/')
+        self.step = 0
         self.time = time.time()
         self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=32, write_graph=False,
                                     write_grads=True, write_images=False, embeddings_freq=0,
@@ -307,8 +309,15 @@ class PlayStrategy(object):
                 card_to_play = c
                 card_q = q[0, c.id]
 
+        card_to_play_rank = 0
+        for prob in q[0]:
+            if prob > card_q:
+                card_to_play_rank += 1
 
-
+        if (self.step % 1000) == 0:
+            summary = tf.Summary(value=[tf.Summary.Value(tag="card_accuracy", simple_value=card_to_play_rank)])
+            self.writer.add_summary(summary, self.step)
+        self.step += 1
 
         self.game_old_observation = i
         self.game_action = card_to_play.id
