@@ -5,7 +5,7 @@ from datetime import datetime
 from keras import backend as k
 
 from elbotto.bots.training import trumpf_training as traintrumpf
-from elbotto.bots.training.card_parser import CardParser
+from elbotto.bots.training.card_parser import create_card
 from elbotto.bots.training.trumpf_converter import Message, TrumpfColor
 
 
@@ -52,7 +52,7 @@ def start_trumpf_training():
                     dealer_gift = rounds['rounds'][round]['player'][player]['hand']
                     player_cards = []
                     for c in dealer_gift:
-                        player_cards.append(CardParser.create_card(c))
+                        player_cards.append(create_card(c))
                     table.insert(player, player_cards)
 
                 amount_stich = len(rounds['rounds'][round]['tricks'])
@@ -62,7 +62,7 @@ def start_trumpf_training():
                     current_player = int(rounds['rounds'][round]['tricks'][stich]['first'])
                     for player_seat in range(amount_players):
                         played_card = rounds['rounds'][round]['tricks'][stich]['cards'][player_seat]
-                        card = CardParser.create_card(played_card)
+                        card = create_card(played_card)
                         table[current_player].append(card)
                         current_player = (current_player - 1) % amount_players
 

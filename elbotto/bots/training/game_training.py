@@ -33,40 +33,14 @@ class GameTraining(Training):
         sgd = SGD(lr=0.005)
         self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
 
-    @staticmethod
-    def create_input(hand_cards, table_cards, game_type):
-        # 150 Inputs (4 x 36 possible cards per hand and 6 trumpf variations).
-        # Partitional: 1-36 -> hand, 37-72 - first card on table, 73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
-        # Status: 0 - no info, 1 - know place of the card
-        inputs = np.zeros((150,))
-        for card in hand_cards:
-            inputs[card.id] = 1
-        for x in range(0, len(table_cards)):
-            c = table_cards[x]
-            inputs[c.id + (x + 1)*36] = 1
-        if game_type.mode == "TRUMPF":
-            inputs[game_type.trumpf_color.value + 4 * 36] = 1
-        elif game_type.mode == "OBEABE":
-            inputs[148] = 1
-        elif game_type.mode == "UNDEUFE":
-            inputs[149] = 1
-        return np.reshape(inputs, (1, 150))
-
-    @staticmethod
-    def create_target(target_card):
-        # one item from input convert to a 36 output matrix for learning about differenz cards
-        comparison_list = np.zeros((36,))
-        comparison_list[target_card.id] = 1
-        return np.reshape(comparison_list, (1, 36))
-
     def train_the_model(self, hand_list, table_list, trumpf_list, target_list):
         x = np.zeros((np.array(hand_list).shape[0], 150))
         y = np.zeros((np.array(target_list).shape[0], 36))
         input_list = []
         target_layer = []
         for i in range(len(hand_list)):
-            input_list.append(self.create_input(hand_list[i], table_list[i], trumpf_list[i]))
-            target_layer.append(self.create_target(target_list[i]))
+            input_list.append(create_input(hand_list[i], table_list[i], trumpf_list[i]))
+            target_layer.append(create_target(target_list[i]))
 
         x[:, :] = input_list
         y[:, :] = target_layer
@@ -79,3 +53,28 @@ class GameTraining(Training):
                 self.q_model.fit(x, y, validation_split=0.1, verbose=1)
         self.game_counter += 1
         print("One Training-Part are finished!")
+
+
+def create_input(hand_cards, table_cards, game_type):
+    # 150 Inputs (4 x 36 possible cards per hand and 6 trumpf variations).
+    # Partitional: 1-36 -> hand, 37-72 - first card on table, 73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
+    # Status: 0 - no info, 1 - know place of the card
+    inputs = np.zeros((150,))
+    for card in hand_cards:
+        inputs[card.id] = 1
+    for x in range(0, len(table_cards)):
+        c = table_cards[x]
+        inputs[c.id + (x + 1)*36] = 1
+    if game_type.mode == "TRUMPF":
+        inputs[game_type.trumpf_color.value + 4 * 36] = 1
+    elif game_type.mode == "OBEABE":
+        inputs[148] = 1
+    elif game_type.mode == "UNDEUFE":
+        inputs[149] = 1
+    return np.reshape(inputs, (1, 150))
+
+
+def create_target(target_card):
+    comparison_list = np.zeros((36,))
+    comparison_list[target_card.id] = 1
+    return np.reshape(comparison_list, (1, 36))
