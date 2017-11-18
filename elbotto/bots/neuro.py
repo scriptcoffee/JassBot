@@ -83,15 +83,17 @@ class Bot(BaseBot):
         super(Bot, self).__init__(server_address, name, chosen_team_index)
         self.game_strategy = PlayStrategy()
 
-        self.start()
+        self.played_cards = []
 
+        self.start()
 
     def handle_request_trumpf(self):
         # CHALLENGE2017: Ask the brain which gameMode to choose
         return self.game_strategy.choose_trumpf(self.hand_cards)
 
-    def handle_stich(self, winner, round_points, total_points):
+    def handle_stich(self, winner, round_points, total_points, played_cards):
         won_stich = self.in_my_team(winner)
+        self.played_cards.extend(played_cards)
         self.game_strategy.stich_reward(round_points)
         logger.debug("Stich: Won:%s, Winner: %s, Round points: %s, Total points: %s", won_stich, winner, round_points, total_points)
 
@@ -108,9 +110,10 @@ class Bot(BaseBot):
 
     def handle_request_card(self, table_cards):
         # CHALLENGE2017: Ask the brain which card to choose
-        return self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type)
+        return self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type, self.played_cards)
 
     def handle_game_finished(self, current_game_points, won_stich_in_game):
+        self.played_cards = []
         super(Bot, self).handle_game_finished(current_game_points, won_stich_in_game)
         self.game_strategy.game_finished(current_game_points, won_stich_in_game)
 
@@ -120,7 +123,7 @@ class PlayStrategy():
     TRUMPF_FIRST_LAYER = 36
     TRUMPF_OUTPUT_LAYER = 6
 
-    INPUT_LAYER = 150
+    INPUT_LAYER = 186
     FIRST_LAYER = 50
     OUTPUT_LAYER = 36
 
@@ -228,9 +231,11 @@ class PlayStrategy():
 
         return states, targets
 
-    def choose_card(self, hand_cards, table_cards, game_type):
+    def choose_card(self, hand_cards, table_cards, game_type, played_cards):
 
-        card_to_play = self.model_choose_card(game_type, hand_cards, table_cards)
+        inputs = self.prepare_game_input(game_type, hand_cards, table_cards, played_cards)
+
+        card_to_play = self.model_choose_card(inputs, hand_cards)
 
         if random.random() < self.epsilon:
             idx = random.randint(0, len(hand_cards)-1)
@@ -291,8 +296,7 @@ class PlayStrategy():
         save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".json", True)
         save_weights(self.trumpf_model, "./logs/config/trumpf_network_weights_" + file_addition + ".h5")
 
-    def model_choose_card(self, game_type, hand_cards, table_cards):
-        inputs = self.prepare_game_input(game_type, hand_cards, table_cards)
+    def model_choose_card(self, inputs, hand_cards):
 
         if self.game_old_observation is not None and self.game_action is not None and self.game_reward is not None:
             self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, inputs, 0))
@@ -321,7 +325,7 @@ class PlayStrategy():
 
         return card_to_play
 
-    def prepare_game_input(self, game_type, hand_cards, table_cards):
+    def prepare_game_input(self, game_type, hand_cards, table_cards, played_cards):
         trumpf_offset = self.INPUT_LAYER - 6
         inputs = np.zeros((self.INPUT_LAYER,))
 
@@ -332,6 +336,10 @@ class PlayStrategy():
             table_card = table_cards[i]
             table_card = Card.create(table_card["number"], table_card["color"])
             input_index = (i + 1) * 36 + table_card.id
+            inputs[input_index] = 1
+
+        for played_card in played_cards:
+            input_index = 4 * 36 + played_card.id
             inputs[input_index] = 1
 
         if game_type.mode == "TRUMPF":
