@@ -2,17 +2,17 @@ from enum import Enum
 
 
 class Color(Enum):
-    HEARTS= 0
-    DIAMONDS= 1
-    CLUBS= 2
-    SPADES= 3
+    HEARTS = 0
+    DIAMONDS = 1
+    CLUBS = 2
+    SPADES = 3
 
 
 CARD_OFFSET = 6
 CARDS_PER_COLOR = 9
 
-class Card(object):
 
+class Card(object):
     def __init__(self, number, color):
         self.number = number
         self.color = Color[color]
@@ -37,4 +37,4 @@ class Card(object):
         return self.number == other.number and self.color == other.color
 
     def __repr__(self):
-        return "%s - %s"%(self.number, self.color)
+        return "%s - %s" % (self.number, self.color)

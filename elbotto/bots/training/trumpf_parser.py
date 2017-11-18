@@ -1,91 +1,65 @@
 import glob
 import json
-
 from datetime import datetime
 from keras import backend as k
-
-from elbotto.bots.training import trumpf_training as traintrumpf
-from elbotto.bots.training.card_parser import create_card
-from elbotto.bots.training.trumpf_converter import trumpf_converter
+from elbotto.bots.training import trumpf_training as training_trumpf_network
+from elbotto.bots.training.parser import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
+from elbotto.bots.training.parser import print_trumpf, print_table
 
 
 def start_trumpf_training():
     # create an instance of the model to want to train
-    network = traintrumpf.TrumpfTraining("Supervised_Trumpfnetwork")
+    network = training_trumpf_network.TrumpfTraining("Supervised_Trumpfnetwork")
     # Import and validate all dates
-    files = glob.glob('./data/*.txt')
+    files = glob.glob('./data/MLAI_8-1_log.txt')
     for file_path in files:
         print(file_path)
 
-        lines = open(file_path).readlines()
+        with open(file_path, 'r') as file_content:
+            lines = file_content.readlines()
 
-        hand_list = []
-        trumpf_list = []
+            hand_list = []
+            trumpf_list = []
 
-        for line in lines:
-            game = line[43:]
-            rounds = json.loads(game)
+            for line in lines:
+                game = line[43:]
+                rounds = json.loads(game)
 
-            print("Game: " + str(line))
+                print("Game: " + str(line))
 
-            amount_rounds = len(rounds['rounds'])
-            amount_players = len(rounds['rounds'][0]['player'])
+                amount_rounds = len(rounds['rounds'])
+                amount_players = len(rounds['rounds'][0]['player'])
 
-            for round in range(amount_rounds):
+                for round in range(amount_rounds):
 
-                table = []
+                    table = []
 
-                print(str(round) + ". Round: " + str(rounds['rounds'][round]))
+                    print(str(round) + ". Round: " + str(rounds['rounds'][round]))
 
-                if rounds['rounds'][round] is None:
-                    # print("Type None isn't valid.")
-                    break
-
-                if 'trump' not in rounds['rounds'][round]:
-                    # print("Round hasn't a trump, so we skip it")
-                    break
-
-                for player in range(amount_players):
-                    if 'hand' not in rounds['rounds'][round]['player'][player]:
-                        # print("Round has no hands, so we skip it")
+                    if rounds['rounds'][round] is None:
+                        # print("Type None isn't valid.")
                         break
-                    dealer_gift = rounds['rounds'][round]['player'][player]['hand']
-                    player_cards = []
-                    for c in dealer_gift:
-                        player_cards.append(create_card(c))
-                    table.insert(player, player_cards)
 
-                amount_stich = len(rounds['rounds'][round]['tricks'])
-                if amount_stich == 0:
-                    break
-                for stich in range(amount_stich):
-                    current_player = int(rounds['rounds'][round]['tricks'][stich]['first'])
-                    for player_seat in range(amount_players):
-                        played_card = rounds['rounds'][round]['tricks'][stich]['cards'][player_seat]
-                        card = create_card(played_card)
-                        table[current_player].append(card)
-                        current_player = (current_player - 1) % amount_players
+                    game_type = get_trumpf(rounds['rounds'][round])
+                    if game_type is None:
+                        break
 
-                trumpf = rounds['rounds'][round]['trump']
-                game_type = trumpf_converter(trumpf)
+                    table = get_remaining_hand_cards(rounds['rounds'][round]['player'], amount_players, table)
+                    table = complete_hand_cards_with_stiches(rounds['rounds'][round]['tricks'], amount_players, table)
+                    if table == 0:
+                        break
 
-                # Round complete with all hand cards for all players and trump
-                if game_type.mode == "TRUMPF":
-                    print("trumpf: " + str(game_type.trumpf_color.name))
-                else:
-                    print("trumpf: " + str(game_type.mode))
-                print("player0: " + str(table[0]))
-                print("player1: " + str(table[1]))
-                print("player2: " + str(table[2]))
-                print("player3: " + str(table[3]))
+                    # Round complete with all hand cards for all players and trump
+                    print_trumpf(game_type)
+                    print_table(table)
 
-                trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
-                print(str(trumpf_decider))
-                hand_list.append(table[trumpf_decider])
-                trumpf_list.append(game_type)
+                    trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
+                    print(str(trumpf_decider))
+                    hand_list.append(table[trumpf_decider])
+                    trumpf_list.append(game_type)
 
-        # call BotNetwork with hand cards and the list of all targets trumpf
-        network.train_the_model(hand_list, trumpf_list)
+            # call BotNetwork with hand cards and the list of all targets trumpf
+            network.train_the_model(hand_list, trumpf_list)
 
     file_addition = datetime.now().strftime("__%Y-%m-%d_%H%M%S")
     network.save_model("./config/trumpf_network_model" + file_addition + ".h5")

@@ -16,13 +16,13 @@ def create_card(card_symbol):
 
 
 COLOR_DICT = {"H": "HEARTS",
-             "D": "DIAMONDS",
-             "C": "CLUBS",
-             "S": "SPADES"
+              "D": "DIAMONDS",
+              "C": "CLUBS",
+              "S": "SPADES"
               }
 
 NUMBER_DICT = {"A": 14,
-              "K": 13,
-              "Q": 12,
-              "J": 11
+               "K": 13,
+               "Q": 12,
+               "J": 11
                }
