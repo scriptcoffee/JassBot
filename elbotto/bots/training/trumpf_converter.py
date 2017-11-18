@@ -8,37 +8,51 @@ class Trumpf(Enum):
     SPADES = 3
 
 
-class Message(object):
-
-    def __init__(self, card_type, trumpf_code):
-        self.trumpf_code = trumpf_code
-        self.mode = ""
-        self.trumpf_color = card_type
-
-    def trumpf_parser(self):
-        if self.trumpf_code < 4:
-            self.mode = "TRUMPF"
-            if self.trumpf_code == 0:
-                self.trumpf_color.name = Trumpf.DIAMONDS.name
-                self.trumpf_color.value = Trumpf.DIAMONDS.value
-            if self.trumpf_code == 1:
-                self.trumpf_color.name = Trumpf.HEARTS.name
-                self.trumpf_color.value = Trumpf.HEARTS.value
-            if self.trumpf_code == 2:
-                self.trumpf_color.name = Trumpf.SPADES.name
-                self.trumpf_color.value = Trumpf.SPADES.value
-            if self.trumpf_code == 3:
-                self.trumpf_color.name = Trumpf.CLUBS.name
-                self.trumpf_color.value = Trumpf.CLUBS.value
-        if self.trumpf_code == 4:
-            self.mode = "OBEABE"
-        if self.trumpf_code == 5:
-            self.mode = "UNDEUFE"
-        return self
-
-
-class TrumpfColor(object):
-
-    def __init__(self, color="", code=0):
+class TrumpfColor:
+    def __init__(self, color, code):
         self.name = color
         self.value = code
+
+
+class TrumpfCard:
+    def __init__(self, mode, color="", code=0):
+        self.mode = mode
+        self.trumpf_color = TrumpfColor(color, code)
+
+
+def set_diamonds():
+    return TrumpfCard("TRUMPF", Trumpf.DIAMONDS.name, Trumpf.DIAMONDS.value)
+
+
+def set_hearts():
+    return TrumpfCard("TRUMPF", Trumpf.HEARTS.name, Trumpf.HEARTS.value)
+
+
+def set_spades():
+    return TrumpfCard("TRUMPF", Trumpf.SPADES.name, Trumpf.SPADES.value)
+
+
+def set_clubs():
+    return TrumpfCard("TRUMPF", Trumpf.CLUBS.name, Trumpf.CLUBS.value)
+
+
+def set_obeabe():
+    return TrumpfCard("OBEABE")
+
+
+def set_undeufe():
+    return TrumpfCard("UNDEUFE")
+
+
+TRUMPF_DICT = {0: set_diamonds,
+               1: set_hearts,
+               2: set_spades,
+               3: set_clubs,
+               4: set_obeabe,
+               5: set_undeufe
+               }
+
+
+def trumpf_converter(trumpf_code):
+    trumpf_card = TRUMPF_DICT[trumpf_code]()
+    return trumpf_card

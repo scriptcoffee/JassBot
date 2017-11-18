@@ -6,7 +6,7 @@ from keras import backend as k
 
 from elbotto.bots.training import trumpf_training as traintrumpf
 from elbotto.bots.training.card_parser import create_card
-from elbotto.bots.training.trumpf_converter import Message, TrumpfColor
+from elbotto.bots.training.trumpf_converter import trumpf_converter
 
 
 def start_trumpf_training():
@@ -67,9 +67,7 @@ def start_trumpf_training():
                         current_player = (current_player - 1) % amount_players
 
                 trumpf = rounds['rounds'][round]['trump']
-                card_type = TrumpfColor()
-                trumpf_message = Message(card_type, int(trumpf))
-                game_type = trumpf_message.trumpf_parser()
+                game_type = trumpf_converter(trumpf)
 
                 # Round complete with all hand cards for all players and trump
                 if game_type.mode == "TRUMPF":

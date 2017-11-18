@@ -6,14 +6,14 @@ from keras import backend as k
 
 from elbotto.bots.training import game_training as trainnet
 from elbotto.bots.training.card_parser import create_card
-from elbotto.bots.training.trumpf_converter import Message, TrumpfColor
+from elbotto.bots.training.trumpf_converter import trumpf_converter
 
 
 def start_training():
     # create an instance of the model to want to train
     network = trainnet.GameTraining("Supervised_Gamenetwork")
     # Import and validate all dates
-    files = glob.glob('./data/*.txt')
+    files = glob.glob('./data/MLAI_3-0_log.txt')
     file_number = 0
     for file_path in files:
         print(file_path)
@@ -54,9 +54,7 @@ def start_training():
                     table.insert(player, player_cards)
 
                 trumpf = rounds['rounds'][round]['trump']
-                card_type = TrumpfColor()
-                trumpf_message = Message(card_type, int(trumpf))
-                game_type = trumpf_message.trumpf_parser()
+                game_type = trumpf_converter(trumpf)
                 amount_stich = len(rounds['rounds'][round]['tricks'])
 
                 if amount_stich == 0:
