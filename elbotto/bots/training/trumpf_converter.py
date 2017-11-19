@@ -44,12 +44,17 @@ def set_undeufe():
     return TrumpfCard("UNDEUFE")
 
 
+def set_schiebe():
+    return TrumpfCard("SCHIEBE")
+
+
 TRUMPF_DICT = {0: set_diamonds,
                1: set_hearts,
                2: set_spades,
                3: set_clubs,
                4: set_obeabe,
-               5: set_undeufe
+               5: set_undeufe,
+               6: set_schiebe
                }
 
 

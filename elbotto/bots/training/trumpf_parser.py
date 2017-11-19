@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from keras import backend as k
 from elbotto.bots.training import trumpf_training as training_trumpf_network
+from elbotto.bots.training.trumpf_converter import trumpf_converter
 from elbotto.bots.training.parser import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
 from elbotto.bots.training.parser import print_trumpf, print_table
 
@@ -11,7 +12,7 @@ def start_trumpf_training():
     # create an instance of the model to want to train
     network = training_trumpf_network.TrumpfTraining("Supervised_Trumpfnetwork")
     # Import and validate all dates
-    files = glob.glob('./data/MLAI_8-1_log.txt')
+    files = glob.glob('./data/*.txt')
     for file_path in files:
         print(file_path)
 
@@ -34,8 +35,6 @@ def start_trumpf_training():
 
                     table = []
 
-                    print(str(round) + ". Round: " + str(rounds['rounds'][round]))
-
                     if rounds['rounds'][round] is None:
                         # print("Type None isn't valid.")
                         break
@@ -54,7 +53,10 @@ def start_trumpf_training():
                     print_table(table)
 
                     trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
-                    print(str(trumpf_decider))
+                    if 'tss' in rounds['rounds'][round]:
+                        hand_list.append(table[trumpf_decider])
+                        trumpf_list.append(trumpf_converter(6))
+                        trumpf_decider = (trumpf_decider + 2) % amount_players
                     hand_list.append(table[trumpf_decider])
                     trumpf_list.append(game_type)
 
