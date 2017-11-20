@@ -29,6 +29,13 @@ def start_training():
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
 
+                table_list = []
+                hand_list = []
+                played_card_list = []
+                trumpf_list = []
+                target_list = []
+                round_finish = False
+
                 for round in range(amount_rounds):
 
                     table = []
@@ -48,17 +55,11 @@ def start_training():
                     if table == 0:
                         break
 
-                    # Round complete with all hand cards for all players and trump
+                    # Round complete with all hand cards for all players and trumpf
                     print_trumpf(game_type)
                     print_table(table)
 
                     for learning_player in range(amount_players):
-                        # print("learning player: " + str(learning_player))
-
-                        table_list = []
-                        hand_list = []
-                        trumpf_list = []
-                        target_list = []
 
                         amount_stich = len(rounds['rounds'][round]['tricks'])
                         for stich in range(amount_stich):
@@ -66,7 +67,6 @@ def start_training():
                             hand = table[learning_player][stich:amount_stich]
                             print("Stich: " + str(rounds['rounds'][round]['tricks'][stich]))
                             current_player = int(rounds['rounds'][round]['tricks'][stich]['first'])
-                            # print("current Player: " + str(current_player))
                             player_seat = 0
 
                             while current_player != learning_player:
@@ -81,17 +81,21 @@ def start_training():
                             target = rounds['rounds'][round]['tricks'][stich]['cards'][player_seat]
                             target_card = create_card(target)
 
-                            print("Cards on table: " + str(cards_on_table))
+                            played_cards = []
+                            for player in range(amount_players):
+                                played_cards.insert(player, table[player][:stich])
+
+                            played_card_list.append(played_cards)
                             table_list.append(cards_on_table)
-                            print("Handcards: " + str(hand))
                             hand_list.append(hand)
-                            print("Trumpf: " + str(game_type.mode))
                             trumpf_list.append(game_type)
-                            print("Target: " + str(target_card))
                             target_list.append(target_card)
 
-                        # call BotNetwork with hand cards, cards from table, trumpf and the list of all targets
-                        network.train_the_model(hand_list, table_list, trumpf_list, target_list)
+                    round_finish = True
+
+                # call BotNetwork with hand cards, cards from table, trumpf and the list of all targets
+                if round_finish:
+                    network.train_the_model(hand_list, table_list, played_card_list, trumpf_list, target_list)
 
         file_addition = str(file_number) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
         network.save_model("./config/game_network_model_" + file_addition + ".h5")

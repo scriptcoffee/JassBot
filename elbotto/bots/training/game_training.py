@@ -8,6 +8,12 @@ from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
 
+INPUT_LAYER = 186
+FIRST_LAYER = 50
+OUTPUT_LAYER = 36
+
+CARD_SET = 36
+
 
 class GameTraining(Training):
     def __init__(self, name):
@@ -19,27 +25,29 @@ class GameTraining(Training):
         sess = tf.Session(config=config)
         k.set_session(sess)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=64,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./game/logs', histogram_freq=5, batch_size=64,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(50, input_shape=(150,), kernel_initializer='uniform'))
+        self.q_model.add(Dense(FIRST_LAYER, input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
         self.q_model.add(keras.layers.normalization.BatchNormalization())
         self.q_model.add(Activation("relu"))
-        self.q_model.add(Dense(36, kernel_regularizer=l2(0.01)))
+        self.q_model.add(Dense(OUTPUT_LAYER, kernel_regularizer=l2(0.01)))
+        self.q_model.add(Activation("softmax"))
         sgd = SGD(lr=0.005)
-        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
+        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
 
-    def train_the_model(self, hand_list, table_list, trumpf_list, target_list):
-        x = np.zeros((np.array(hand_list).shape[0], 150))
-        y = np.zeros((np.array(target_list).shape[0], 36))
+    def train_the_model(self, hand_list, table_list, played_card_list, trumpf_list, target_list):
+        x = np.zeros((np.array(hand_list).shape[0], INPUT_LAYER))
+        y = np.zeros((np.array(target_list).shape[0], OUTPUT_LAYER))
         input_list = []
         target_layer = []
         for i in range(len(hand_list)):
-            input_list.append(create_input(hand_list[i], table_list[i], trumpf_list[i]))
+            print("Played Cards: " + str(played_card_list[i]))
+            input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
             target_layer.append(create_target(target_list[i]))
 
         x[:, :] = input_list
@@ -47,7 +55,7 @@ class GameTraining(Training):
         print("Input-Layer: " + str(x))
         print("Output-Layer: " + str(y))
         if len(y) > 1:
-            if self.game_counter % 1000 == 0:
+            if self.game_counter % 500 == 0:
                 self.q_model.fit(x, y, validation_split=0.1, verbose=1, callbacks=[self.tb_callback])
             else:
                 self.q_model.fit(x, y, validation_split=0.1, verbose=1)
@@ -55,26 +63,32 @@ class GameTraining(Training):
         print("One Training-Part are finished!")
 
 
-def create_input(hand_cards, table_cards, game_type):
-    # 150 Inputs (4 x 36 possible cards per hand and 6 trumpf variations).
-    # Partitional: 1-36 -> hand, 37-72 - first card on table, 73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
-    # Status: 0 - no info, 1 - know place of the card
-    inputs = np.zeros((150,))
+def create_input(hand_cards, table_cards, played_cards, game_type):
+
+    trumpf_offset = INPUT_LAYER - 6
+    inputs = np.zeros((INPUT_LAYER,))
+
     for card in hand_cards:
         inputs[card.id] = 1
-    for x in range(0, len(table_cards)):
-        c = table_cards[x]
-        inputs[c.id + (x + 1)*36] = 1
+
+    for x in range(len(table_cards)):
+        card = table_cards[x]
+        inputs[card.id + ((x + 1)*CARD_SET)] = 1
+
+    for player_of_cards in range(len(played_cards)):
+        for played_card in played_cards[player_of_cards]:
+            inputs[(4*CARD_SET) + played_card.id] = 1
+
     if game_type.mode == "TRUMPF":
-        inputs[game_type.trumpf_color.value + 4 * 36] = 1
+        inputs[game_type.trumpf_color.value + trumpf_offset] = 1
     elif game_type.mode == "OBEABE":
-        inputs[148] = 1
+        inputs[trumpf_offset + 4] = 1
     elif game_type.mode == "UNDEUFE":
-        inputs[149] = 1
-    return np.reshape(inputs, (1, 150))
+        inputs[trumpf_offset + 5] = 1
+    return np.reshape(inputs, (1, INPUT_LAYER))
 
 
 def create_target(target_card):
-    target_list = np.zeros((36,))
+    target_list = np.zeros((OUTPUT_LAYER,))
     target_list[target_card.id] = 1
-    return np.reshape(target_list, (1, 36))
+    return np.reshape(target_list, (1, OUTPUT_LAYER))

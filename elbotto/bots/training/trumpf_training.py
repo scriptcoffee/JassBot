@@ -15,7 +15,7 @@ class TrumpfTraining(Training):
     def __init__(self, name):
         super().__init__(name)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=32,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./trumpf/logs', histogram_freq=5, batch_size=32,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)

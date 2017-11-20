@@ -48,7 +48,7 @@ def start_trumpf_training():
                     if table == 0:
                         break
 
-                    # Round complete with all hand cards for all players and trump
+                    # Round complete with all hand cards for all players and trumpf
                     print_trumpf(game_type)
                     print_table(table)
 

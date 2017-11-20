@@ -27,7 +27,7 @@ def get_remaining_hand_cards(end_hand_list, amount_players, table):
 def complete_hand_cards_with_stiches(stich_list, amount_players, table):
     amount_stich = len(stich_list)
     if amount_stich == 0:
-        # print("Not enough stich!")
+        # print("No stich exist!")
         return 0
     for stich in range(amount_stich):
         current_player = int(stich_list[stich]['first'])
