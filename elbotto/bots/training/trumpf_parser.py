@@ -1,6 +1,5 @@
 import glob
 import json
-from datetime import datetime
 from keras import backend as k
 from elbotto.bots.training import trumpf_training as training_trumpf_network
 from elbotto.bots.training.trumpf_converter import trumpf_converter
@@ -63,10 +62,7 @@ def start_trumpf_training():
             # call BotNetwork with hand cards and the list of all targets trumpf
             network.train_the_model(hand_list, trumpf_list)
 
-    file_addition = datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-    network.save_model("./config/trumpf_network_model" + file_addition + ".h5")
-    network.save_model("./config/trumpf_network_model" + file_addition + ".json", True)
-    network.save_weights("./config/trumpf_network_weights" + file_addition + ".h5")
+    network.save_model_and_weights("trumpf")
 
     k.clear_session()
 

@@ -1,6 +1,5 @@
 import glob
 import json
-from datetime import datetime
 from keras import backend as k
 from elbotto.bots.training import game_training as training_game_network
 from elbotto.bots.training.card_parser import create_card
@@ -12,7 +11,7 @@ def start_training():
     # create an instance of the model to want to train
     network = training_game_network.GameTraining("Supervised_Gamenetwork")
     # Import and validate all dates
-    files = glob.glob('./data/MLAI_8-1_log.txt')
+    files = glob.glob('./data/*.txt')
     file_number = 0
     for file_path in files:
         print(file_path)
@@ -97,10 +96,7 @@ def start_training():
                 if round_finish:
                     network.train_the_model(hand_list, table_list, played_card_list, trumpf_list, target_list)
 
-        file_addition = str(file_number) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-        network.save_model("./config/game_network_model_" + file_addition + ".h5")
-        network.save_model("./config/game_network_model_" + file_addition + ".json", True)
-        network.save_weights("./config/game_network_weights_" + file_addition + ".h5")
+        network.save_model_and_weights("game", file_number)
 
         file_number += 1
 

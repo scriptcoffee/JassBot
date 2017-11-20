@@ -19,6 +19,7 @@ class TrumpfTraining(Training):
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
+        self.save_model_and_weights("trumpf", "init")
 
     def define_model(self):
         self.q_model = Sequential()

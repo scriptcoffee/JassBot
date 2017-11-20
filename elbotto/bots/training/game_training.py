@@ -29,6 +29,7 @@ class GameTraining(Training):
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
+        self.save_model_and_weights("game", "init")
 
     def define_model(self):
         self.q_model = Sequential()
@@ -46,7 +47,6 @@ class GameTraining(Training):
         input_list = []
         target_layer = []
         for i in range(len(hand_list)):
-            print("Played Cards: " + str(played_card_list[i]))
             input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
             target_layer.append(create_target(target_list[i]))
 
