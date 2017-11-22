@@ -127,6 +127,8 @@ class PlayStrategy():
     FIRST_LAYER = 50
     OUTPUT_LAYER = 36
 
+    STICH_PER_ROUND = 9
+
     def __init__(self):
         self.geschoben = False
         self.cardsAtTable = []
@@ -136,8 +138,8 @@ class PlayStrategy():
         self.epsilon = 0.6
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
-        self.trumpf_batch_size = 16
         self.batch_size = 16
+        self.trumpf_batch_size = self.batch_size * self.STICH_PER_ROUND
 
         config = tf.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = 0.4
@@ -147,6 +149,7 @@ class PlayStrategy():
         self.reset_tmp_memory()
 
         self.trumpf_memory = deque(maxlen=50000)
+        self.round_memory = deque(maxlen=9)
         self.game_memory = deque(maxlen=50000)
 
         self.define_models()
@@ -252,7 +255,9 @@ class PlayStrategy():
     def game_finished(self, current_game_points, won_stich_in_game):
         if self.trumpf_observation is not None and self.trumpf_action is not None:
             self.trumpf_memory.append((self.trumpf_observation, self.trumpf_action, (won_stich_in_game.count(1)/10), 1))
-        self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, None, 1))
+        self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 1))
+        self.game_memory.append(list(self.round_memory))
+        self.round_memory.clear()
         self.reset_tmp_memory()
         self.fit_models()
         if (self.game_counter % 1000) == 0:
@@ -299,7 +304,7 @@ class PlayStrategy():
     def model_choose_card(self, inputs, hand_cards):
 
         if self.game_old_observation is not None and self.game_action is not None and self.game_reward is not None:
-            self.game_memory.append((self.game_old_observation, self.game_action, self.game_reward, inputs, 0))
+            self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 0))
 
         q = self.game_model.predict(inputs)
 
@@ -356,19 +361,21 @@ class PlayStrategy():
     def replay_games(self):
         minibatch = random.sample(self.game_memory, self.batch_size)
 
-        states = np.zeros((self.batch_size, self.INPUT_LAYER))
-        targets = np.zeros((self.batch_size, self.OUTPUT_LAYER))
-        index = 0
-        for state, action, reward, next_state, done in minibatch:
-            target = reward
-            if not done:
-                target = (reward + self.gamma *
-                          np.amax(self.game_model.predict(next_state)[0]))
-            target_f = self.game_model.predict(state)
-            target_f[0][action] = target
+        states = []
+        targets = []
+        for game_round in minibatch:
+            td_points = 0
+            index = 1
+            for state, action, reward, done in reversed(game_round):
+                target = reward + td_points / index
 
-            states[index] = state
-            targets[index] = target_f
-            index += 1
+                td_points = self.gamma * (np.amax(self.game_model.predict(state)) + td_points)
 
-        return states, targets
+                target_f = self.game_model.predict(state)
+                target_f[0][action] = target
+
+                states.append(np.squeeze(state, axis=0))
+                targets.append(np.squeeze(target_f, axis=0))
+                index += 1
+
+        return np.array(states), np.array(targets)
