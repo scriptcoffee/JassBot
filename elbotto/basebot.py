@@ -38,6 +38,7 @@ class BaseBot(object):
         self.hand_cards= []
         self.won_stich_in_game = []
         self.last_round_points = 0
+        self.opponent_last_round_points = 0
 
     def start(self):
         logger.info("Connecting to %s", self.server_address)
@@ -73,6 +74,7 @@ class BaseBot(object):
             
         elif message_type == MessageType.DEAL_CARDS:
             self.last_round_points = 0
+            self.opponent_last_round_points = 0
             self.hand_cards = data
 
         elif message_type == MessageType.REQUEST_TRUMPF:
@@ -106,14 +108,9 @@ class BaseBot(object):
             won_stich = self.in_my_team(winner)
             self.won_stich_in_game.append(won_stich)
             total_points = self.total_points(data["score"])
-            current_game_points = self.current_game_points(data["score"])
 
-            if won_stich:
-                round_points = current_game_points - self.last_round_points
-            else:
-                round_points = 0
+            round_points = self.calculate_roud_points(data["score"], won_stich)
 
-            self.last_round_points = current_game_points
             self.handle_stich(winner, round_points, total_points, data['playedCards'])
 
         elif message_type == MessageType.BROADCAST_TOURNAMENT_STARTED:
@@ -140,6 +137,26 @@ class BaseBot(object):
         if answer:
             self.connection.send(answer)
 
+    def calculate_roud_points(self, scores, won_stich):
+        my_current_game_points = 0
+        opponent_current_game_points = 0
+
+        for score in scores:
+            if self.my_team.name == score.team_name:
+                my_current_game_points = score.current_game_points
+            else:
+                opponent_current_game_points = score.current_game_points
+
+        if won_stich:
+            round_points = my_current_game_points - self.last_round_points
+        else:
+            round_points = 0 - (opponent_current_game_points - self.opponent_last_round_points)
+
+        self.last_round_points = my_current_game_points
+        self.opponent_last_round_points = opponent_current_game_points
+        
+        return round_points
+
     def handle_played_cards(self, played_cards):
         # CHALLENGE2017: This removes a handcard if the last played card on the table was one of yours.
         self.update_hand(played_cards)
@@ -158,6 +175,7 @@ class BaseBot(object):
 
     def handle_game_finished(self, current_game_points, won_stich_in_game):
         self.last_round_points = 0
+        self.opponent_last_round_points = 0
         pass
 
     def handle_reject_card(self, data):
@@ -177,13 +195,6 @@ class BaseBot(object):
     def in_my_team(self, winner):
         return self.my_team.is_member(winner)
         # return self.player == winner
-
-    def current_game_points(self, scores):
-        for score in scores:
-            if self.my_team.name == score.team_name:
-                return score.current_game_points
-
-        return 0
 
     def total_points(self, scores):
         for score in scores:
