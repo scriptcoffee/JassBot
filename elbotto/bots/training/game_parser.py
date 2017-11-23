@@ -23,7 +23,7 @@ def start_training():
                 game = line[43:]
                 rounds = json.loads(game)
 
-                print("Game: " + str(line))
+                print("Game: {}".format(line))
 
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
@@ -39,7 +39,7 @@ def start_training():
 
                     table = []
 
-                    print(str(round) + ". Round: " + str(rounds['rounds'][round]))
+                    print("{}. Round: {}".format(round, rounds['rounds'][round]))
 
                     if rounds['rounds'][round] is None:
                         # print("Type None isn't valid.")
@@ -64,7 +64,7 @@ def start_training():
                         for stich in range(amount_stich):
                             cards_on_table = []
                             hand = table[learning_player][stich:amount_stich]
-                            print("Stich: " + str(rounds['rounds'][round]['tricks'][stich]))
+                            print("Stich: {}".format(rounds['rounds'][round]['tricks'][stich]))
                             current_player = int(rounds['rounds'][round]['tricks'][stich]['first'])
                             player_seat = 0
 

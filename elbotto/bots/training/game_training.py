@@ -50,8 +50,8 @@ class GameTraining(Training):
 
         x[:, :] = input_list
         y[:, :] = target_layer
-        print("Input-Layer: " + str(x))
-        print("Output-Layer: " + str(y))
+        print("Input-Layer: {}".format(x))
+        print("Output-Layer: {}".format(y))
         if len(y) > 1:
             if self.game_counter % 500 == 0:
                 self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])

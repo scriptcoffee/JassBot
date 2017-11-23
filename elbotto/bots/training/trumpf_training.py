@@ -39,8 +39,8 @@ class TrumpfTraining(Training):
             target_list.append(create_target(trumpf[i]))
         x[:, :] = input_list
         y[:, :] = target_list
-        print("Input: " + str(x))
-        print("Output: " + str(y))
+        print("Input: {}".format(x))
+        print("Output: {}".format(y))
         self.q_model.fit(x, y, validation_split=0.3, verbose=1, epochs=5, callbacks=[self.tb_callback])
         print("Learning Trumpf!")
 

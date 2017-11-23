@@ -41,13 +41,13 @@ def complete_hand_cards_with_stiches(stich_list, amount_players, table):
 
 def print_trumpf(game_type):
     if game_type.mode == "TRUMPF":
-        print("trumpf: " + str(game_type.trumpf_color.name))
+        print("trumpf: {}".format(game_type.trumpf_color.name))
     else:
-        print("trumpf: " + str(game_type.mode))
+        print("trumpf: {}".format(game_type.mode))
 
 
 def print_table(table):
-    print("player0: " + str(table[0]))
-    print("player1: " + str(table[1]))
-    print("player2: " + str(table[2]))
-    print("player3: " + str(table[3]))
+    print("player0: {}".format(table[0]))
+    print("player1: {}".format(table[1]))
+    print("player2: {}".format(table[2]))
+    print("player3: {}".format(table[3]))

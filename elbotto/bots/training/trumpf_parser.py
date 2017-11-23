@@ -25,7 +25,7 @@ def start_trumpf_training():
                 game = line[43:]
                 rounds = json.loads(game)
 
-                print("Game: " + str(line))
+                print("Game: {}".format(line))
 
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
