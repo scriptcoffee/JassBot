@@ -1,7 +1,7 @@
 import keras
 import numpy as np
 from keras.models import Sequential
-from keras.layers import Dense, Activation
+from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
@@ -15,7 +15,7 @@ class TrumpfTraining(Training):
     def __init__(self, name):
         super().__init__(name)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./trumpf/logs', histogram_freq=5, batch_size=32,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs/trumpf', histogram_freq=5, batch_size=32,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
@@ -23,11 +23,9 @@ class TrumpfTraining(Training):
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(FIRST_LAYER, input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
-        self.q_model.add(keras.layers.normalization.BatchNormalization())
-        self.q_model.add(Activation("relu"))
-        self.q_model.add(Dense(OUTPUT_LAYER, kernel_regularizer=l2(0.01)))
-        self.q_model.add(Activation("softmax"))
+        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01)))
         sgd = SGD(lr=0.005)
         self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
 

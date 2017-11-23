@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from keras import backend as k
 from keras.models import Sequential
-from keras.layers import Dense, Activation
+from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
@@ -25,7 +25,7 @@ class GameTraining(Training):
         sess = tf.Session(config=config)
         k.set_session(sess)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./game/logs', histogram_freq=5, batch_size=64,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs/game', histogram_freq=5, batch_size=64,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
@@ -33,11 +33,9 @@ class GameTraining(Training):
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(FIRST_LAYER, input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
-        self.q_model.add(keras.layers.normalization.BatchNormalization())
-        self.q_model.add(Activation("relu"))
-        self.q_model.add(Dense(OUTPUT_LAYER, kernel_regularizer=l2(0.01)))
-        self.q_model.add(Activation("softmax"))
+        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01)))
         sgd = SGD(lr=0.005)
         self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
 
@@ -56,15 +54,14 @@ class GameTraining(Training):
         print("Output-Layer: " + str(y))
         if len(y) > 1:
             if self.game_counter % 500 == 0:
-                self.q_model.fit(x, y, validation_split=0.1, verbose=1, callbacks=[self.tb_callback])
+                self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])
             else:
-                self.q_model.fit(x, y, validation_split=0.1, verbose=1)
+                self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1)
         self.game_counter += 1
         print("One Training-Part are finished!")
 
 
 def create_input(hand_cards, table_cards, played_cards, game_type):
-
     trumpf_offset = INPUT_LAYER - 6
     inputs = np.zeros((INPUT_LAYER,))
 
@@ -73,11 +70,11 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
 
     for x in range(len(table_cards)):
         card = table_cards[x]
-        inputs[card.id + ((x + 1)*CARD_SET)] = 1
+        inputs[card.id + ((x + 1) * CARD_SET)] = 1
 
     for player_of_cards in range(len(played_cards)):
         for played_card in played_cards[player_of_cards]:
-            inputs[(4*CARD_SET) + played_card.id] = 1
+            inputs[(4 * CARD_SET) + played_card.id] = 1
 
     if game_type.mode == "TRUMPF":
         inputs[game_type.trumpf_color.value + trumpf_offset] = 1
