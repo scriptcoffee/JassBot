@@ -127,8 +127,6 @@ class PlayStrategy():
     FIRST_LAYER = 50
     OUTPUT_LAYER = 36
 
-    STICH_PER_ROUND = 9
-
     def __init__(self):
         self.geschoben = False
         self.cardsAtTable = []
@@ -139,7 +137,6 @@ class PlayStrategy():
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
         self.batch_size = 16
-        self.trumpf_batch_size = self.batch_size * self.STICH_PER_ROUND
 
         config = tf.ConfigProto()
         config.gpu_options.per_process_gpu_memory_fraction = 0.4
@@ -149,7 +146,7 @@ class PlayStrategy():
         self.reset_tmp_memory()
 
         self.trumpf_memory = deque(maxlen=50000)
-        self.round_memory = deque(maxlen=9)
+        self.round_memory = deque(maxlen=50)
         self.game_memory = deque(maxlen=50000)
 
         self.define_models()
@@ -217,11 +214,11 @@ class PlayStrategy():
         # if self.gschobe: nüme schiebe
         return trumpf
 
-    def replay_trumpf(self):
-        minibatch = random.sample(self.trumpf_memory, self.trumpf_batch_size)
+    def replay_trumpf(self, length):
+        minibatch = random.sample(self.trumpf_memory, length)
 
-        states = np.zeros((self.trumpf_batch_size, self.TRUMPF_INPUT_LAYER))
-        targets = np.zeros((self.trumpf_batch_size, self.TRUMPF_OUTPUT_LAYER))
+        states = np.zeros((length, self.TRUMPF_INPUT_LAYER))
+        targets = np.zeros((length, self.TRUMPF_OUTPUT_LAYER))
 
         index = 0
         for state, action, reward, done in minibatch:
@@ -265,11 +262,13 @@ class PlayStrategy():
         self.game_counter += 1
 
     def fit_models(self):
-        if len(self.trumpf_memory) < self.trumpf_batch_size or len(self.game_memory) < self.batch_size:
+        if len(self.game_memory) < self.batch_size:
             return 0
-
-        trumpf_states, trumpf_targets = self.replay_trumpf()
         game_states, game_targets = self.replay_games()
+
+        if len(self.trumpf_memory) < len(game_states):
+            return 0
+        trumpf_states, trumpf_targets = self.replay_trumpf(len(game_states))
 
         if (self.game_counter % 100) == 0:
             self.combined_model.fit(x={'trumpf_input': trumpf_states, 'game_input': game_states},
