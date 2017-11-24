@@ -364,9 +364,11 @@ class PlayStrategy():
         targets = []
         for game_round in minibatch:
             td_points = 0
-            index = 1
+            index = 0
             for state, action, reward, done in reversed(game_round):
-                target = reward + td_points / index
+                target = reward
+                if index >= 1:
+                    target += td_points / index
 
                 td_points = self.gamma * (np.amax(self.game_model.predict(state)) + td_points)
 
