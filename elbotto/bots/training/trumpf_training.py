@@ -29,14 +29,14 @@ class TrumpfTraining(Training):
         sgd = SGD(lr=0.005)
         self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
 
-    def train_the_model(self, start_handcards, trumpf):
+    def train_the_model(self, start_handcards, trumpfs):
         x = np.zeros((np.array(start_handcards).shape[0], INPUT_LAYER))
-        y = np.zeros((np.array(trumpf).shape[0], OUTPUT_LAYER))
+        y = np.zeros((np.array(trumpfs).shape[0], OUTPUT_LAYER))
         input_list = []
         target_list = []
         for i in range(len(start_handcards)):
-            input_list.append(create_input(start_handcards[i], trumpf[i - 1]))
-            target_list.append(create_target(trumpf[i]))
+            input_list.append(create_input(start_handcards[i], trumpfs[i - 1]))
+            target_list.append(create_target(trumpfs[i]))
         x[:, :] = input_list
         y[:, :] = target_list
         print("Input: {}".format(x))
