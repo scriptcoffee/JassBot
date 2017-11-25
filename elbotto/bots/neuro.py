@@ -118,7 +118,7 @@ class Bot(BaseBot):
         self.game_strategy.game_finished(current_game_points, won_stich_in_game)
 
 
-class PlayStrategy():
+class PlayStrategy:
     TRUMPF_INPUT_LAYER = 36
     TRUMPF_FIRST_LAYER = 36
     TRUMPF_OUTPUT_LAYER = 6
@@ -127,7 +127,7 @@ class PlayStrategy():
     FIRST_LAYER = 50
     OUTPUT_LAYER = 36
 
-    def __init__(self):
+    def __init__(self, save_models=True):
         self.geschoben = False
         self.cardsAtTable = []
         self.game_counter = 1
@@ -150,7 +150,8 @@ class PlayStrategy():
         self.game_memory = deque(maxlen=50000)
 
         self.define_models()
-        self.save_weights_and_models()
+        if save_models:
+            self.save_weights_and_models()
         self.writer = tf.summary.FileWriter('./logs/')
         self.step = 0
         self.time = time.time()
