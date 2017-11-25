@@ -117,10 +117,10 @@ class Bot(BaseBot):
         # CHALLENGE2017: Ask the brain which card to choose
         return self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type, self.played_cards)
 
-    def handle_game_finished(self, current_game_points, won_stich_in_game):
+    def handle_game_finished(self):
         self.played_cards = []
-        super(Bot, self).handle_game_finished(current_game_points, won_stich_in_game)
-        self.game_strategy.game_finished(current_game_points, won_stich_in_game)
+        super(Bot, self).handle_game_finished()
+        self.game_strategy.game_finished()
 
 
 class PlayStrategy:
@@ -256,7 +256,7 @@ class PlayStrategy:
     def stich_reward(self, round_points):
         self.game_reward = round_points / 100
 
-    def game_finished(self, current_game_points, won_stich_in_game):
+    def game_finished(self):
         self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 1))
         self.game_memory.append(list(self.round_memory))
         self.round_memory.clear()

@@ -22,7 +22,7 @@ class Bot(BaseBot):
         # CHALLENGE2017: Ask the brain which gameMode to choose
         return self.game_strategy.choose_trumpf(self.hand_cards)
 
-    def handle_stich(self, winner, round_points, total_points):
+    def handle_stich(self, winner, round_points, total_points, played_cards):
         won_stich = self.in_my_team(winner)
         logger.debug("Stich: Won:%s, Winner: %s, Round points: %s, Total points: %s", won_stich, winner, round_points, total_points)
 

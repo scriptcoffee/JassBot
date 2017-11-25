@@ -92,9 +92,8 @@ class BaseBot(object):
             self.handle_reject_card(data)
             
         elif message_type == MessageType.BROADCAST_GAME_FINISHED:
-            won_stich = self.won_stich_in_game
             self.won_stich_in_game = []
-            self.handle_game_finished(data[0].current_game_points, won_stich)
+            self.handle_game_finished()
 
         elif message_type == MessageType.BROADCAST_SESSION_JOINED:
             player = data["player"]
@@ -173,7 +172,7 @@ class BaseBot(object):
         # Do nothing with that :-)
         pass
 
-    def handle_game_finished(self, current_game_points, won_stich_in_game):
+    def handle_game_finished(self):
         self.last_round_points = 0
         self.opponent_last_round_points = 0
         pass
