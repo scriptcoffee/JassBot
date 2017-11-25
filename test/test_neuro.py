@@ -1,4 +1,4 @@
-from elbotto.bots.neuro import PlayStrategy, TRUMPF_DICT
+from elbotto.bots.neuro import PlayStrategy, TRUMPF_DICT, evaluate_trumpf_choise
 from elbotto.card import Card, Color
 
 
@@ -202,6 +202,125 @@ def test_prepare_game_input_all():
 
     assert (input_layer == expected_input_layer).all()
 
+
+def test_trumpf_choise_evaluation_shift():
+    hand_cards = [
+        Card.create(13, "HEARTS"),
+        Card.create(14, "HEARTS"),
+        Card.create(8, "DIAMONDS"),
+        Card.create(13, "DIAMONDS"),
+        Card.create(8, "CLUBS"),
+        Card.create(13, "CLUBS"),
+        Card.create(9, "CLUBS"),
+        Card.create(13, "SPADES"),
+        Card.create(9, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 6, 0) == 0
+
+def test_trumpf_choise_evaluation_miss_shift():
+    hand_cards = [
+        Card.create(7, "HEARTS"),
+        Card.create(14, "HEARTS"),
+        Card.create(10, "DIAMONDS"),
+        Card.create(11, "DIAMONDS"),
+        Card.create(6, "CLUBS"),
+        Card.create(7, "CLUBS"),
+        Card.create(9, "CLUBS"),
+        Card.create(13, "SPADES"),
+        Card.create(12, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 4, 0) == -30
+
+def test_trumpf_choise_evaluation_color_trumpf():
+    hand_cards = [
+        Card.create(14, "HEARTS"),
+        Card.create(11, "DIAMONDS"),
+        Card.create(8, "DIAMONDS"),
+        Card.create(13, "DIAMONDS"),
+        Card.create(8, "CLUBS"),
+        Card.create(6, "CLUBS"),
+        Card.create(9, "CLUBS"),
+        Card.create(14, "SPADES"),
+        Card.create(9, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 1, 0) == 0
+
+def test_trumpf_choise_evaluation_undeufe():
+    hand_cards = [
+        Card.create(6, "HEARTS"),
+        Card.create(7, "HEARTS"),
+        Card.create(7, "DIAMONDS"),
+        Card.create(8, "DIAMONDS"),
+        Card.create(14, "CLUBS"),
+        Card.create(6, "CLUBS"),
+        Card.create(12, "CLUBS"),
+        Card.create(7, "SPADES"),
+        Card.create(6, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 5, 0) == 0
+
+def test_trumpf_choise_evaluation_wrong_trumpf():
+    hand_cards = [
+        Card.create(11, "HEARTS"),
+        Card.create(14, "HEARTS"),
+        Card.create(9, "HEARTS"),
+        Card.create(13, "HEARTS"),
+        Card.create(8, "CLUBS"),
+        Card.create(13, "CLUBS"),
+        Card.create(9, "CLUBS"),
+        Card.create(14, "SPADES"),
+        Card.create(9, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 1, 0) == -59
+
+
+def test_trumpf_choise_evaluation_shifted():
+    hand_cards = [
+        Card.create(7, "HEARTS"),
+        Card.create(14, "HEARTS"),
+        Card.create(10, "DIAMONDS"),
+        Card.create(11, "DIAMONDS"),
+        Card.create(6, "CLUBS"),
+        Card.create(7, "CLUBS"),
+        Card.create(9, "CLUBS"),
+        Card.create(13, "SPADES"),
+        Card.create(12, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 1, 1) == 0
+
+
+def test_trumpf_choise_evaluation_shifted_wrong_trumpf():
+    hand_cards = [
+        Card.create(7, "HEARTS"),
+        Card.create(14, "HEARTS"),
+        Card.create(10, "DIAMONDS"),
+        Card.create(11, "DIAMONDS"),
+        Card.create(6, "CLUBS"),
+        Card.create(7, "CLUBS"),
+        Card.create(9, "CLUBS"),
+        Card.create(13, "SPADES"),
+        Card.create(12, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 3, 1) == -20
+
+
+def test_trumpf_choise_evaluation_shifted_wrong_obenabe():
+    hand_cards = [
+        Card.create(6, "HEARTS"),
+        Card.create(7, "HEARTS"),
+        Card.create(9, "HEARTS"),
+        Card.create(13, "DIAMONDS"),
+        Card.create(12, "DIAMONDS"),
+        Card.create(7, "CLUBS"),
+        Card.create(14, "CLUBS"),
+        Card.create(10, "SPADES"),
+        Card.create(11, "SPADES")]
+
+    assert evaluate_trumpf_choise(hand_cards, 4, 1) == -33
+
+
+if __name__ == '__main__':
+    test_trumpf_choise_evaluation_shifted_wrong_trumpf()
 
 def get_all_cards():
     cards = []

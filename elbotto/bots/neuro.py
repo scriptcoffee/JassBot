@@ -215,8 +215,10 @@ class PlayStrategy:
 
         trumpf = TRUMPF_DICT[trumpf_nr]()
 
+        trumpf_reward = evaluate_trumpf_choise(hand_cards, trumpf_nr, self.geschoben)
 
-        # if self.gschobe: nüme schiebe
+        self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward/100, 1))
+
         return trumpf
 
     def replay_trumpf(self, length):
@@ -255,8 +257,6 @@ class PlayStrategy:
         self.game_reward = round_points / 100
 
     def game_finished(self, current_game_points, won_stich_in_game):
-        if self.trumpf_observation is not None and self.trumpf_action is not None:
-            self.trumpf_memory.append((self.trumpf_observation, self.trumpf_action, (won_stich_in_game.count(1)/10), 1))
         self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 1))
         self.game_memory.append(list(self.round_memory))
         self.round_memory.clear()
@@ -385,3 +385,80 @@ class PlayStrategy:
                 index += 1
 
         return np.array(states), np.array(targets)
+
+
+def evaluate_trumpf_choise(hand_cards, trumpf_chosen, geschoben):
+    guaranteed_stich_reward_color = 4
+    guaranteed_stich_reward_nocolor = 11
+    shift_score_threshold = 55
+    no_shift_penalty = -30
+
+    cards_per_color = {
+        0: [],
+        1: [],
+        2: [],
+        3: []}
+
+    score_per_trumpf = {
+        0: 0,
+        1: 0,
+        2: 0,
+        3: 0,
+        4: 0,
+        5: 0,
+        6: 0}
+
+    trumpf_card_score = {
+        6: 10,
+        7: 10,
+        8: 10,
+        9: 15,
+        10: 10,
+        11: 30,
+        12: 10,
+        13: 10,
+        14: 12}
+
+    for card in hand_cards:
+        score_per_trumpf[card.color.value] += trumpf_card_score[card.number]
+        cards_per_color[card.color.value].append(card)
+
+    for trumpf_color in Color:
+        for color in Color:
+            if color.value != trumpf_color.value:
+                score_per_trumpf[trumpf_color.value] += calc_guaranteed_stich_score(cards_per_color[color.value], True) * guaranteed_stich_reward_color
+        score_per_trumpf[4] += calc_guaranteed_stich_score(cards_per_color[trumpf_color.value], True) * guaranteed_stich_reward_nocolor
+        score_per_trumpf[5] += calc_guaranteed_stich_score(cards_per_color[trumpf_color.value], False) * guaranteed_stich_reward_nocolor
+
+    max_score = np.amax(list(score_per_trumpf.values()))
+
+    score = score_per_trumpf[trumpf_chosen] - max_score
+    if max_score < shift_score_threshold and not geschoben:
+        if trumpf_chosen == 6:
+            score = 0
+        else:
+            score = no_shift_penalty
+
+    return score
+
+
+def calc_guaranteed_stich_score(cards, obenabe):
+    stichs = 0
+    if obenabe:
+        highest_card = 14
+    else:
+        highest_card = 6
+
+    cards.sort(key=lambda x: x.id, reverse=obenabe)
+
+    for card in cards:
+        if card.number == highest_card:
+            stichs += 1
+            if obenabe:
+                highest_card -= 1
+            else:
+                highest_card += 1
+        else:
+            break
+
+    return stichs
