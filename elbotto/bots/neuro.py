@@ -63,13 +63,18 @@ def undeufe():
     return GameType("UNDEUFE")
 
 
+def shift():
+    return GameType("SCHIEBE")
+
+
 TRUMPF_DICT = {
     0: trumpf_hearts,
     1: trumpf_diamonds,
     2: trumpf_clubs,
     3: trumpf_spades,
     4: obeabe,
-    5: undeufe
+    5: undeufe,
+    6: shift
 }
 
 
@@ -119,9 +124,9 @@ class Bot(BaseBot):
 
 
 class PlayStrategy:
-    TRUMPF_INPUT_LAYER = 36
-    TRUMPF_FIRST_LAYER = 36
-    TRUMPF_OUTPUT_LAYER = 6
+    TRUMPF_INPUT_LAYER = 37
+    TRUMPF_FIRST_LAYER = 37
+    TRUMPF_OUTPUT_LAYER = 7
 
     INPUT_LAYER = 186
     FIRST_LAYER = 50
@@ -200,6 +205,7 @@ class PlayStrategy:
 
         for hand_card in hand_cards:
             inputs[hand_card.id] = 1
+        inputs[self.TRUMPF_INPUT_LAYER - 1] = self.geschoben
 
         inputs = np.reshape(inputs, (1, self.TRUMPF_INPUT_LAYER))
 
@@ -209,8 +215,6 @@ class PlayStrategy:
 
         trumpf = TRUMPF_DICT[trumpf_nr]()
 
-        self.trumpf_observation = inputs
-        self.trumpf_action = trumpf_nr
 
         # if self.gschobe: nüme schiebe
         return trumpf
