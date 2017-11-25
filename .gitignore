@@ -50,4 +50,3 @@ docs/_build
 elbotto/bots/training/config/*
 elbotto/bots/training/data/*
 elbotto/bots/training/logs/*
-elbotto/bots/training/*/logs/*
