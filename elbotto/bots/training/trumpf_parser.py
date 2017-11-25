@@ -12,6 +12,8 @@ def start_trumpf_training():
     network = training_trumpf_network.TrumpfTraining("Supervised_Trumpfnetwork")
     # Import and validate all dates
     files = glob.glob('./data/*.txt')
+    trumpf_tuples = {}
+    tss = 0
     for file_path in files:
         print(file_path)
 
@@ -51,8 +53,21 @@ def start_trumpf_training():
                     print_trumpf(game_type)
                     print_table(table)
 
+                    if game_type.mode == "TRUMPF":
+                        if game_type.trumpf_color.name not in trumpf_tuples:
+                            trumpf_tuples[game_type.trumpf_color.name] = 0
+                        counter = int(trumpf_tuples[game_type.trumpf_color.name])
+                        trumpf_tuples[game_type.trumpf_color.name] = (counter + 1)
+                    else:
+                        if game_type.mode not in trumpf_tuples:
+                            trumpf_tuples[game_type.mode] = 0
+                        counter = int(trumpf_tuples[game_type.mode])
+                        trumpf_tuples[game_type.mode] = (counter + 1)
+
+
                     trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
                     if 'tss' in rounds['rounds'][round]:
+                        tss += 1
                         hand_list.append(table[trumpf_decider])
                         trumpf_list.append(trumpf_converter(6))
                         trumpf_decider = (trumpf_decider + 2) % amount_players
@@ -65,6 +80,10 @@ def start_trumpf_training():
     network.save_model_and_weights("trumpf")
 
     k.clear_session()
+
+    for t in trumpf_tuples:
+        print("{}: {}".format(t, trumpf_tuples[t]))
+    print("SCHIEBEN: {}".format(tss))
 
 
 if __name__ == '__main__':
