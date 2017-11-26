@@ -12,8 +12,9 @@ def start_training():
     # create an instance of the model to want to train
     network = training_game_network.GameTraining("Supervised_Gamenetwork")
     # Import and validate all dates
-    files = glob.glob('./data/MLAI_8-1_log.txt')
+    files = glob.glob('./data/*.txt')
     file_number = 0
+    samples = 0
     for file_path in files:
         print(file_path)
 
@@ -29,44 +30,46 @@ def start_training():
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
 
-                for round in range(amount_rounds):
+                for learning_player in range(amount_players):
 
-                    table = []
+                    table_list = []
+                    hand_list = []
+                    trumpf_list = []
+                    target_list = []
+                    round_finish = False
 
-                    print(str(round) + ". Round: " + str(rounds['rounds'][round]))
+                    for round in range(amount_rounds):
 
-                    if rounds['rounds'][round] is None:
-                        # print("Type None isn't valid.")
-                        break
+                        table = []
 
-                    game_type = get_trumpf(rounds['rounds'][round])
-                    if game_type is None:
-                        break
+                        print("{}. Round: {}".format(round, rounds['rounds'][round]))
 
-                    table = get_remaining_hand_cards(rounds['rounds'][round]['player'], amount_players, table)
-                    table = complete_hand_cards_with_stiches(rounds['rounds'][round]['tricks'], amount_players, table)
-                    if table == 0:
-                        break
+                        if rounds['rounds'][round] is None:
+                            # print("Type None isn't valid.")
+                            break
 
-                    # Round complete with all hand cards for all players and trump
-                    print_trumpf(game_type)
-                    print_table(table)
+                        game_type = get_trumpf(rounds['rounds'][round])
+                        if game_type is None:
+                            break
 
-                    for learning_player in range(amount_players):
-                        # print("learning player: " + str(learning_player))
+                        table = get_remaining_hand_cards(rounds['rounds'][round]['player'], amount_players, table)
+                        table = complete_hand_cards_with_stiches(rounds['rounds'][round]['tricks'], amount_players, table)
+                        if table == 0:
+                            break
 
-                        table_list = []
-                        hand_list = []
-                        trumpf_list = []
-                        target_list = []
+                        # Round complete with all hand cards for all players and trump
+                        print_trumpf(game_type)
+                        print_table(table)
+
+                        # print("learning player: {}".format(learning_player))
 
                         amount_stich = len(rounds['rounds'][round]['tricks'])
                         for stich in range(amount_stich):
                             cards_on_table = []
                             hand = table[learning_player][stich:amount_stich]
-                            print("Stich: " + str(rounds['rounds'][round]['tricks'][stich]))
+                            print("Stich: {}".format(str(rounds['rounds'][round]['tricks'][stich])))
                             current_player = int(rounds['rounds'][round]['tricks'][stich]['first'])
-                            # print("current Player: " + str(current_player))
+                            # print("current Player: {}".format(current_player))
                             player_seat = 0
 
                             while current_player != learning_player:
@@ -81,17 +84,21 @@ def start_training():
                             target = rounds['rounds'][round]['tricks'][stich]['cards'][player_seat]
                             target_card = create_card(target)
 
-                            print("Cards on table: " + str(cards_on_table))
+                            print("Cards on table: {}".format(cards_on_table))
                             table_list.append(cards_on_table)
-                            print("Handcards: " + str(hand))
+                            print("Handcards: {}".format(hand))
                             hand_list.append(hand)
-                            print("Trumpf: " + str(game_type.mode))
+                            print("Trumpf: {}".format(game_type.mode))
                             trumpf_list.append(game_type)
-                            print("Target: " + str(target_card))
+                            print("Target: {}".format(target_card))
                             target_list.append(target_card)
 
-                        # call BotNetwork with hand cards, cards from table, trumpf and the list of all targets
+                        round_finish = True
+
+                    # call BotNetwork with hand cards, cards from table, trumpf and the list of all targets
+                    if round_finish:
                         network.train_the_model(hand_list, table_list, trumpf_list, target_list)
+                        samples += len(hand_list)
 
         file_addition = str(file_number) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
         network.save_model("./config/game_network_model_" + file_addition + ".h5")
@@ -101,6 +108,8 @@ def start_training():
         file_number += 1
 
     k.clear_session()
+
+    print(samples)
 
 
 if __name__ == '__main__':

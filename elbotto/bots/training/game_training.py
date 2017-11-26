@@ -1,9 +1,10 @@
 import keras
 import numpy as np
 import tensorflow as tf
+from datetime import datetime
 from keras import backend as k
 from keras.models import Sequential
-from keras.layers import Dense, Activation
+from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
@@ -23,15 +24,19 @@ class GameTraining(Training):
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
+        file_addition = "init" + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
+        self.save_model("./config/game_network_model_" + file_addition + ".h5")
+        self.save_weights("./config/game_network_weights_" + file_addition + ".h5")
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(50, input_shape=(150,), kernel_initializer='uniform'))
-        self.q_model.add(keras.layers.normalization.BatchNormalization())
-        self.q_model.add(Activation("relu"))
+        self.q_model.add(Dense(200, input_shape=(150,), activation="relu", kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(100, activation="relu", kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(36, kernel_regularizer=l2(0.01)))
         sgd = SGD(lr=0.005)
-        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error'])
+        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
 
     def train_the_model(self, hand_list, table_list, trumpf_list, target_list):
         x = np.zeros((np.array(hand_list).shape[0], 150))
@@ -44,13 +49,13 @@ class GameTraining(Training):
 
         x[:, :] = input_list
         y[:, :] = target_layer
-        print("Input-Layer: " + str(x))
-        print("Output-Layer: " + str(y))
+        print("Input-Layer: {}".format(x))
+        print("Output-Layer: {}".format(y))
         if len(y) > 1:
             if self.game_counter % 1000 == 0:
-                self.q_model.fit(x, y, validation_split=0.1, verbose=1, callbacks=[self.tb_callback])
+                self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])
             else:
-                self.q_model.fit(x, y, validation_split=0.1, verbose=1)
+                self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1)
         self.game_counter += 1
         print("One Training-Part are finished!")
 
