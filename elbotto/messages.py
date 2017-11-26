@@ -12,7 +12,9 @@ class GameType(object):
             self.trumpf_color = Color[trumpfColor]
 
     def __repr__(self):
-        return "% s | % s"%(self.mode, self.trumpf_color)
+        if hasattr(self, 'trumpf_color'):
+            return "% s | % s"%(self.mode, self.trumpf_color)
+        return "% s"%self.mode
 
     def to_dict(self):
         if hasattr(self, 'trumpf_color'):

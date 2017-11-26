@@ -18,7 +18,7 @@ class Bot(BaseBot):
 
         self.start()
 
-    def handle_request_trumpf(self):
+    def handle_request_trumpf(self, geschoben):
         # CHALLENGE2017: Ask the brain which gameMode to choose
         return self.game_strategy.choose_trumpf(self.hand_cards)
 

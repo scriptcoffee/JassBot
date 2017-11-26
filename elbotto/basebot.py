@@ -78,7 +78,7 @@ class BaseBot(object):
             self.hand_cards = data
 
         elif message_type == MessageType.REQUEST_TRUMPF:
-            game_type = self.handle_request_trumpf()
+            game_type = self.handle_request_trumpf(data)
             answer = messages.create(MessageType.CHOOSE_TRUMPF, game_type)
             
         elif message_type == MessageType.REQUEST_CARD:
@@ -160,7 +160,7 @@ class BaseBot(object):
         # CHALLENGE2017: This removes a handcard if the last played card on the table was one of yours.
         self.update_hand(played_cards)
 
-    def handle_request_trumpf(self):
+    def handle_request_trumpf(self, geschoben):
         # CHALLENGE2017: Ask the brain which gameMode to choose
         return DEFAULT_TRUMPF
 

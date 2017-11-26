@@ -92,9 +92,9 @@ class Bot(BaseBot):
 
         self.start()
 
-    def handle_request_trumpf(self):
+    def handle_request_trumpf(self, geschoben):
         # CHALLENGE2017: Ask the brain which gameMode to choose
-        return self.game_strategy.choose_trumpf(self.hand_cards)
+        return self.game_strategy.choose_trumpf(self.hand_cards, geschoben)
 
     def handle_stich(self, winner, round_points, total_points, played_cards):
         won_stich = self.in_my_team(winner)
@@ -133,7 +133,6 @@ class PlayStrategy:
     OUTPUT_LAYER = 36
 
     def __init__(self, save_models=True):
-        self.geschoben = False
         self.cardsAtTable = []
         self.game_counter = 1
 
@@ -200,26 +199,31 @@ class PlayStrategy:
         self.game_old_observation = None
         self.game_action = None
 
-    def choose_trumpf(self, hand_cards):
+    def choose_trumpf(self, hand_cards, geschoben):
         inputs = np.zeros((self.TRUMPF_INPUT_LAYER,))
 
         for hand_card in hand_cards:
             inputs[hand_card.id] = 1
-        inputs[self.TRUMPF_INPUT_LAYER - 1] = self.geschoben
+        inputs[self.TRUMPF_INPUT_LAYER - 1] = geschoben
 
         inputs = np.reshape(inputs, (1, self.TRUMPF_INPUT_LAYER))
 
-        q = self.trumpf_model.predict(inputs)
+        while True:
+            q = self.trumpf_model.predict(inputs)
 
-        trumpf_nr = np.argmax(q)
+            trumpf_nr = np.argmax(q)
 
-        trumpf = TRUMPF_DICT[trumpf_nr]()
+            if random.random() < self.epsilon:
+                trumpf_nr = random.randint(0, self.TRUMPF_OUTPUT_LAYER - 2)
 
-        trumpf_reward = evaluate_trumpf_choise(hand_cards, trumpf_nr, self.geschoben)
+            trumpf = TRUMPF_DICT[trumpf_nr]()
 
-        self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward/100, 1))
+            trumpf_reward = evaluate_trumpf_choise(hand_cards, trumpf_nr, geschoben)
 
-        return trumpf
+            self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward/100, 1))
+
+            if not (geschoben and trumpf_nr == 6):
+                return trumpf
 
     def replay_trumpf(self, length):
         minibatch = random.sample(self.trumpf_memory, length)
