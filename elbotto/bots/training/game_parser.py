@@ -13,6 +13,7 @@ def start_training():
     # Import and validate all dates
     files = glob.glob('./data/*.txt')
     file_number = 0
+    samples = 0
     for file_path in files:
         print(file_path)
 
@@ -28,37 +29,37 @@ def start_training():
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
 
-                table_list = []
-                hand_list = []
-                played_card_list = []
-                trumpf_list = []
-                target_list = []
-                round_finish = False
+                for learning_player in range(amount_players):
 
-                for round in range(amount_rounds):
+                    table_list = []
+                    hand_list = []
+                    played_card_list = []
+                    trumpf_list = []
+                    target_list = []
+                    round_finish = False
 
-                    table = []
+                    for round in range(amount_rounds):
 
-                    print("{}. Round: {}".format(round, rounds['rounds'][round]))
+                        table = []
 
-                    if rounds['rounds'][round] is None:
-                        # print("Type None isn't valid.")
-                        break
+                        print("{}. Round: {}".format(round, rounds['rounds'][round]))
 
-                    game_type = get_trumpf(rounds['rounds'][round])
-                    if game_type is None:
-                        break
+                        if rounds['rounds'][round] is None:
+                            # print("Type None isn't valid.")
+                            break
 
-                    table = get_remaining_hand_cards(rounds['rounds'][round]['player'], amount_players, table)
-                    table = complete_hand_cards_with_stiches(rounds['rounds'][round]['tricks'], amount_players, table)
-                    if table == 0:
-                        break
+                        game_type = get_trumpf(rounds['rounds'][round])
+                        if game_type is None:
+                            break
 
-                    # Round complete with all hand cards for all players and trumpf
-                    print_trumpf(game_type)
-                    print_table(table)
+                        table = get_remaining_hand_cards(rounds['rounds'][round]['player'], amount_players, table)
+                        table = complete_hand_cards_with_stiches(rounds['rounds'][round]['tricks'], amount_players, table)
+                        if table == 0:
+                            break
 
-                    for learning_player in range(amount_players):
+                        # Round complete with all hand cards for all players and trumpf
+                        print_trumpf(game_type)
+                        print_table(table)
 
                         amount_stich = len(rounds['rounds'][round]['tricks'])
                         for stich in range(amount_stich):
@@ -90,17 +91,20 @@ def start_training():
                             trumpf_list.append(game_type)
                             target_list.append(target_card)
 
-                    round_finish = True
+                        round_finish = True
 
-                # call BotNetwork with hand cards, cards from table, trumpf and the list of all targets
-                if round_finish:
-                    network.train_the_model(hand_list, table_list, played_card_list, trumpf_list, target_list)
+                    # call BotNetwork with hand cards, cards from table, trumpf and the list of all targets
+                    if round_finish:
+                        network.train_the_model(hand_list, table_list, played_card_list, trumpf_list, target_list)
+                        samples += len(hand_list)
 
         network.save_model_and_weights("game", file_number)
 
         file_number += 1
 
     k.clear_session()
+
+    print("Total amount of stich: {}".format(samples))
 
 
 if __name__ == '__main__':
