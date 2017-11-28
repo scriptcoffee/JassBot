@@ -5,6 +5,7 @@ from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
+from elbotto.bots.training.trumpf_converter import TrumpfCard, trumpf_converter
 
 INPUT_LAYER = 37
 FIRST_LAYER = 37
@@ -45,11 +46,17 @@ class TrumpfTraining(Training):
         print("Learning Trumpf!")
 
 
-def create_input(start_handcards, trumpf):
+def create_input(start_handcards, game_type):
+    if len(start_handcards) != 9:
+        return None
     inputs = np.zeros((INPUT_LAYER,))
     for card in start_handcards:
+        if inputs[card.id] == 1:
+            return None
         inputs[card.id] = 1
-    if trumpf.mode == "SCHIEBE":
+    if not isinstance(game_type, TrumpfCard):
+        inputs[INPUT_LAYER - 1] = 0
+    elif game_type.mode == "SCHIEBE":
         inputs[INPUT_LAYER - 1] = 1
     return np.reshape(inputs, (1, INPUT_LAYER))
 
@@ -77,6 +84,10 @@ CHOOSE_DICT = {"TRUMPF": choose_color,
 
 
 def create_target(trumpf):
+    if not isinstance(trumpf, TrumpfCard):
+        trumpf = trumpf_converter(trumpf)
+    if trumpf is None:
+        return trumpf
     target_layer = np.zeros((OUTPUT_LAYER,))
     CHOOSE_DICT[trumpf.mode](target_layer, trumpf)
     return np.reshape(target_layer, (1, OUTPUT_LAYER))
