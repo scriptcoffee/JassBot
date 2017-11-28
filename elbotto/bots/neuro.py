@@ -379,9 +379,9 @@ class PlayStrategy:
                 if index >= 1:
                     target += td_points / index
 
-                td_points = self.gamma * (np.amax(self.game_model.predict(state)) + td_points)
-
                 target_f = self.game_model.predict(state)
+                td_points = self.gamma * (np.amax(target_f) + td_points)
+
                 target_f[0][action] = target
 
                 states.append(np.squeeze(state, axis=0))
