@@ -15,7 +15,7 @@ class TrumpfColor:
 
 
 class TrumpfCard:
-    def __init__(self, mode, color="", code=0):
+    def __init__(self, mode, color="", code=""):
         self.mode = mode
         self.trumpf_color = TrumpfColor(color, code)
 
@@ -49,15 +49,25 @@ def set_schiebe():
 
 
 TRUMPF_DICT = {0: set_diamonds,
+               'DIAMONDS': set_diamonds,
                1: set_hearts,
+               'HEARTS': set_hearts,
                2: set_spades,
+               'SPADES': set_spades,
                3: set_clubs,
+               'CLUBS': set_clubs,
                4: set_obeabe,
+               'OBEABE': set_obeabe,
                5: set_undeufe,
-               6: set_schiebe
+               'UNDEUFE': set_undeufe,
+               6: set_schiebe,
+               'SCHIEBE': set_schiebe
                }
 
 
 def trumpf_converter(trumpf_code):
-    trumpf_card = TRUMPF_DICT[trumpf_code]()
+    if trumpf_code in TRUMPF_DICT.keys():
+        trumpf_card = TRUMPF_DICT[trumpf_code]()
+    else:
+        return None
     return trumpf_card
