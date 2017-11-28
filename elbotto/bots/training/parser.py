@@ -1,5 +1,26 @@
+import os
+import glob
 from elbotto.bots.training.card_parser import create_card
 from elbotto.bots.training.trumpf_converter import trumpf_converter, TrumpfCard
+
+
+def check_path(data_path):
+    if not os.path.isdir(data_path):
+        print("The given path doesn't exist.")
+        return None
+    return data_path
+
+
+def check_file(data_path, data_file):
+    files = glob.glob(os.path.join(data_path, data_file))
+    file_list = []
+    for file in files:
+        if os.path.exists(file):
+            file_list.append(file)
+    if len(file_list) == 0:
+        print("Your entry file doesn't exist.")
+        file_list = None
+    return file_list
 
 
 def get_trumpf(round):

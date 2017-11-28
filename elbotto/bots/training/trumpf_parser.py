@@ -1,19 +1,27 @@
-import glob
 import json
 from keras import backend as k
 from elbotto.bots.training import trumpf_training as training_trumpf_network
 from elbotto.bots.training.trumpf_converter import trumpf_converter
 from elbotto.bots.training.parser import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
+from elbotto.bots.training.parser import check_path, check_file
 from elbotto.bots.training.parser import print_trumpf, print_table
 
 
-def start_trumpf_training():
+def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):
+    if check_path(data_path) is None:
+        return
+    files = check_file(data_path, data_file)
+    if files is None:
+        return
+    if check_path(log_path) is None:
+        return
+
     # create an instance of the model to want to train
-    network = training_trumpf_network.TrumpfTraining("Supervised_Trumpfnetwork")
-    # Import and validate all dates
-    files = glob.glob('./data/*.txt')
+    network = training_trumpf_network.TrumpfTraining(network_name, log_path)
+
     trumpf_tuples = {}
     tss = 0
+
     for file_path in files:
         print(file_path)
 
@@ -64,7 +72,6 @@ def start_trumpf_training():
                         counter = int(trumpf_tuples[game_type.mode])
                         trumpf_tuples[game_type.mode] = (counter + 1)
 
-
                     trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
                     if 'tss' in rounds['rounds'][round]:
                         tss += 1
@@ -87,4 +94,4 @@ def start_trumpf_training():
 
 
 if __name__ == '__main__':
-    start_trumpf_training()
+    start_trumpf_training(network_name="Supervised Trumpfnetwork")

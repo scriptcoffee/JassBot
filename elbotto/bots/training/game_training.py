@@ -17,7 +17,7 @@ CARD_SET = 36
 
 
 class GameTraining(Training):
-    def __init__(self, name):
+    def __init__(self, name, log_path):
         super().__init__(name)
         self.game_counter = 0
 
@@ -26,7 +26,7 @@ class GameTraining(Training):
         sess = tf.Session(config=config)
         k.set_session(sess)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs/game', histogram_freq=5, batch_size=64,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=64,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)

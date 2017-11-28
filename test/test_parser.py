@@ -1,7 +1,29 @@
 import json
 from elbotto.bots.training.parser import get_trumpf, get_remaining_hand_cards, complete_hand_cards_with_stiches
-from elbotto.bots.training.parser import print_trumpf, print_table
+from elbotto.bots.training.parser import check_path, check_file, print_trumpf, print_table
 from elbotto.bots.training.card_parser import create_card
+
+
+def test_check_path_false_dir():
+    assert check_path("/bla/") is None
+
+
+def test_check_path_valid_dir():
+    input_dir = "./parser_test/"
+    result = check_path("./parser_test/")
+
+    assert result == input_dir
+
+
+def test_check_file_invalid_inputs():
+    assert check_file("./test/", "*.log") is None
+
+
+def test_check_file_valid_file():
+    input_string = ["./parser_test/testfile.txt"]
+    result = check_file("./parser_test/", "testfile.txt")
+
+    assert result == input_string
 
 
 def test_get_trumpf_invalid():
