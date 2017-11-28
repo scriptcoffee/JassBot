@@ -7,6 +7,7 @@ from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
+from elbotto.bots.training.card_parser import CardParser
 
 INPUT_LAYER = 186
 FIRST_LAYER = 50
@@ -65,6 +66,8 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
     trumpf_offset = INPUT_LAYER - 6
     inputs = np.zeros((INPUT_LAYER,))
 
+    if len(hand_cards) == 0:
+        return None
     for card in hand_cards:
         inputs[card.id] = 1
 
@@ -72,6 +75,8 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
         card = table_cards[x]
         inputs[card.id + ((x + 1) * CARD_SET)] = 1
 
+    if len(played_cards) > 0 and isinstance(played_cards[0], CardParser):
+        return None
     for player_of_cards in range(len(played_cards)):
         for played_card in played_cards[player_of_cards]:
             inputs[(4 * CARD_SET) + played_card.id] = 1
@@ -86,6 +91,8 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
 
 
 def create_target(target_card):
+    if not isinstance(target_card, CardParser):
+        return None
     target_list = np.zeros((OUTPUT_LAYER,))
     target_list[target_card.id] = 1
     return np.reshape(target_list, (1, OUTPUT_LAYER))
