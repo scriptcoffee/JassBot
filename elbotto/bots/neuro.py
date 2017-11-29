@@ -244,7 +244,7 @@ class PlayStrategy:
 
     def choose_card(self, hand_cards, table_cards, game_type, played_cards):
 
-        inputs = self.prepare_game_input(game_type, hand_cards, table_cards, played_cards)
+        inputs = prepare_game_input(self.INPUT_LAYER, game_type, hand_cards, table_cards, played_cards)
 
         card_to_play = self.model_choose_card(inputs, hand_cards)
 
@@ -338,34 +338,6 @@ class PlayStrategy:
 
         return card_to_play
 
-    def prepare_game_input(self, game_type, hand_cards, table_cards, played_cards):
-        trumpf_offset = self.INPUT_LAYER - 6
-        inputs = np.zeros((self.INPUT_LAYER,))
-
-        for hand_card in hand_cards:
-            inputs[hand_card.id] = 1
-
-        for i in range(len(table_cards)):
-            table_card = table_cards[i]
-            table_card = Card.create(table_card["number"], table_card["color"])
-            input_index = (i + 1) * 36 + table_card.id
-            inputs[input_index] = 1
-
-        for played_card in played_cards:
-            input_index = 4 * 36 + played_card.id
-            inputs[input_index] = 1
-
-        if game_type.mode == "TRUMPF":
-            inputs[game_type.trumpf_color.value + trumpf_offset] = 1
-        elif game_type.mode == "OBEABE":
-            inputs[trumpf_offset + 4] = 1
-        elif game_type.mode == "UNDEUFE":
-            inputs[trumpf_offset + 5] = 1
-
-        inputs = np.reshape(inputs, (1, self.INPUT_LAYER))
-
-        return inputs
-
     def replay_games(self):
         minibatch = random.sample(self.game_memory, self.batch_size)
 
@@ -389,6 +361,35 @@ class PlayStrategy:
                 index += 1
 
         return np.array(states), np.array(targets)
+
+
+def prepare_game_input(input_layer_size, game_type, hand_cards, table_cards, played_cards):
+    trumpf_offset = input_layer_size - 6
+    inputs = np.zeros((input_layer_size,))
+
+    for hand_card in hand_cards:
+        inputs[hand_card.id] = 1
+
+    for i in range(len(table_cards)):
+        table_card = table_cards[i]
+        table_card = Card.create(table_card["number"], table_card["color"])
+        input_index = (i + 1) * 36 + table_card.id
+        inputs[input_index] = 1
+
+    for played_card in played_cards:
+        input_index = 4 * 36 + played_card.id
+        inputs[input_index] = 1
+
+    if game_type.mode == "TRUMPF":
+        inputs[game_type.trumpf_color.value + trumpf_offset] = 1
+    elif game_type.mode == "OBEABE":
+        inputs[trumpf_offset + 4] = 1
+    elif game_type.mode == "UNDEUFE":
+        inputs[trumpf_offset + 5] = 1
+
+    inputs = np.reshape(inputs, (1, input_layer_size))
+
+    return inputs
 
 
 def evaluate_trumpf_choise(hand_cards, trumpf_chosen, geschoben):

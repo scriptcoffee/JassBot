@@ -1,5 +1,14 @@
-from elbotto.bots.neuro import PlayStrategy, TRUMPF_DICT, evaluate_trumpf_choise
+from elbotto.bots.neuro import prepare_game_input, TRUMPF_DICT, evaluate_trumpf_choise
 from elbotto.card import Card, Color
+
+
+def get_all_cards():
+    cards = []
+    for color in Color:
+        for i in range(6, 15):
+            cards.append(Card.create(i, color.name))
+
+    return cards
 
 
 def test_prepare_game_input_first_stich():
@@ -16,6 +25,7 @@ def test_prepare_game_input_first_stich():
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       1, 0, 0, 0, 0, 0]]
 
+    input_layer_size = 186
     game_type = TRUMPF_DICT[0]()
     hand_cards = [
         Card.create(6, "HEARTS"),
@@ -30,10 +40,7 @@ def test_prepare_game_input_first_stich():
     table_cards = [{'number': 8, 'color': "CLUBS"}, {'number': 9, 'color': "SPADES"}]
     played_cards = []
 
-    ps = PlayStrategy(False)
-    ps.INPUT_LAYER = 186
-
-    input_layer = PlayStrategy.prepare_game_input(ps, game_type, hand_cards, table_cards, played_cards)
+    input_layer = prepare_game_input(input_layer_size, game_type, hand_cards, table_cards, played_cards)
 
     assert (input_layer == expected_input_layer).all()
 
@@ -52,6 +59,7 @@ def test_prepare_game_input_second_stich():
       0,  0,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
       0,  0,  1,  0,  0,  0]]
 
+    input_layer_size = 186
     game_type = TRUMPF_DICT[2]()
     hand_cards = [
         Card.create(6, "HEARTS"),
@@ -74,10 +82,7 @@ def test_prepare_game_input_second_stich():
         Card.create(8, "DIAMONDS"),
         Card.create(8, "CLUBS")]
 
-    ps = PlayStrategy(False)
-    ps.INPUT_LAYER = 186
-
-    input_layer = PlayStrategy.prepare_game_input(ps, game_type, hand_cards, table_cards, played_cards)
+    input_layer = prepare_game_input(input_layer_size, game_type, hand_cards, table_cards, played_cards)
 
     assert (input_layer == expected_input_layer).all()
 
@@ -96,6 +101,7 @@ def test_prepare_game_input_last_stich():
       1,  0,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
       0,  0,  0,  1,  0,  0]]
 
+    input_layer_size = 186
     game_type = TRUMPF_DICT[3]()
     hand_cards = [Card.create(8, "HEARTS")]
     table_cards = []
@@ -133,10 +139,7 @@ def test_prepare_game_input_last_stich():
         Card.create(9, "SPADES"),
         Card.create(7, "SPADES")]
 
-    ps = PlayStrategy(False)
-    ps.INPUT_LAYER = 186
-
-    input_layer = PlayStrategy.prepare_game_input(ps, game_type, hand_cards, table_cards, played_cards)
+    input_layer = prepare_game_input(input_layer_size, game_type, hand_cards, table_cards, played_cards)
 
     assert (input_layer == expected_input_layer).all()
 
@@ -155,15 +158,13 @@ def test_prepare_game_input_none():
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 1, 0]]
 
+    input_layer_size = 186
     game_type = TRUMPF_DICT[4]()
     hand_cards = []
     table_cards = []
     played_cards = []
 
-    ps = PlayStrategy(False)
-    ps.INPUT_LAYER = 186
-
-    input_layer = PlayStrategy.prepare_game_input(ps, game_type, hand_cards, table_cards, played_cards)
+    input_layer = prepare_game_input(input_layer_size, game_type, hand_cards, table_cards, played_cards)
 
     assert (input_layer == expected_input_layer).all()
 
@@ -190,11 +191,8 @@ def test_prepare_game_input_all():
         Card.create(6, "HEARTS").to_dict(),
         Card.create(6, "HEARTS").to_dict()]
 
-    ps = PlayStrategy(False)
-    ps.INPUT_LAYER = 186
-
-    input_layer = PlayStrategy.prepare_game_input(
-        ps,
+    input_layer = prepare_game_input(
+        input_layer_size=186,
         game_type=game_type,
         hand_cards=all_cards,
         table_cards=table_cards,
@@ -217,6 +215,7 @@ def test_trumpf_choise_evaluation_shift():
 
     assert evaluate_trumpf_choise(hand_cards, 6, 0) == 0
 
+
 def test_trumpf_choise_evaluation_miss_shift():
     hand_cards = [
         Card.create(7, "HEARTS"),
@@ -230,6 +229,7 @@ def test_trumpf_choise_evaluation_miss_shift():
         Card.create(12, "SPADES")]
 
     assert evaluate_trumpf_choise(hand_cards, 4, 0) == -30
+
 
 def test_trumpf_choise_evaluation_color_trumpf():
     hand_cards = [
@@ -245,6 +245,7 @@ def test_trumpf_choise_evaluation_color_trumpf():
 
     assert evaluate_trumpf_choise(hand_cards, 1, 0) == 0
 
+
 def test_trumpf_choise_evaluation_undeufe():
     hand_cards = [
         Card.create(6, "HEARTS"),
@@ -258,6 +259,7 @@ def test_trumpf_choise_evaluation_undeufe():
         Card.create(6, "SPADES")]
 
     assert evaluate_trumpf_choise(hand_cards, 5, 0) == 0
+
 
 def test_trumpf_choise_evaluation_wrong_trumpf():
     hand_cards = [
@@ -317,15 +319,3 @@ def test_trumpf_choise_evaluation_shifted_wrong_obenabe():
         Card.create(11, "SPADES")]
 
     assert evaluate_trumpf_choise(hand_cards, 4, 1) == -33
-
-
-if __name__ == '__main__':
-    test_trumpf_choise_evaluation_shifted_wrong_trumpf()
-
-def get_all_cards():
-    cards = []
-    for color in Color:
-        for i in range(6, 15):
-            cards.append(Card.create(i, color.name))
-
-    return cards
