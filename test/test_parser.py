@@ -9,8 +9,8 @@ def test_check_path_false_dir():
 
 
 def test_check_path_valid_dir():
-    input_dir = "./parser_test/"
-    result = check_path("./parser_test/")
+    input_dir = "./test/parser_test/"
+    result = check_path("./test/parser_test/")
 
     assert result == input_dir
 
@@ -20,8 +20,8 @@ def test_check_file_invalid_inputs():
 
 
 def test_check_file_valid_file():
-    input_string = ["./parser_test/testfile.txt"]
-    result = check_file("./parser_test/", "testfile.txt")
+    input_string = ["./test/parser_test/testfile.txt"]
+    result = check_file("./test/parser_test/", "testfile.txt")
 
     assert result == input_string
 
