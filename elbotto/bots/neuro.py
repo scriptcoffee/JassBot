@@ -120,7 +120,7 @@ class Bot(BaseBot):
     def handle_game_finished(self):
         self.played_cards = []
         super(Bot, self).handle_game_finished()
-        self.game_strategy.game_finished()
+        self.game_strategy.game_finished(self.match)
 
 
 class PlayStrategy:
@@ -131,6 +131,9 @@ class PlayStrategy:
     INPUT_LAYER = 186
     FIRST_LAYER = 50
     OUTPUT_LAYER = 36
+
+    MATCH_REWARD = 100
+    REWARD_SCALING_FACTOR = 100
 
     def __init__(self, save_models=True):
         self.cardsAtTable = []
@@ -220,7 +223,7 @@ class PlayStrategy:
 
             trumpf_reward = evaluate_trumpf_choise(hand_cards, trumpf_nr, geschoben)
 
-            self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward/100, 1))
+            self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward/REWARD_SCALING_FACTOR, 1))
 
             if not (geschoben and trumpf_nr == 6):
                 return trumpf
@@ -255,14 +258,22 @@ class PlayStrategy:
         return card_to_play
 
     def card_rejected(self):
-        self.game_reward = CARD_REJECTED_PENALTY / 100
+        self.game_reward = CARD_REJECTED_PENALTY / REWARD_SCALING_FACTOR
 
     def stich_reward(self, round_points):
-        self.game_reward = round_points / 100
+        self.game_reward = round_points / REWARD_SCALING_FACTOR
 
-    def game_finished(self):
+    def game_finished(self, isMatch):
         self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 1))
-        self.game_memory.append(list(self.round_memory))
+        if isMatch:
+            round = []
+            for stich in self.round_memory:
+                stich = list(stich)
+                stich[2] += (self.MATCH_REWARD / 9) / REWARD_SCALING_FACTOR
+                round.append(stich)
+            self.game_memory.append(round)
+        else:
+            self.game_memory.append(list(self.round_memory))
         self.round_memory.clear()
         self.reset_tmp_memory()
         self.fit_models()

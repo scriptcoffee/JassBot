@@ -15,6 +15,7 @@ class SessionType(Enum):
 
 
 DEFAULT_TRUMPF = GameType("TRUMPF", card.Color.HEARTS.name)
+MATCH_POINTS = 100
 
 
 class BaseBot(object):
@@ -39,6 +40,7 @@ class BaseBot(object):
         self.won_stich_in_game = []
         self.last_round_points = 0
         self.opponent_last_round_points = 0
+        self.match = False
 
     def start(self):
         logger.info("Connecting to %s", self.server_address)
@@ -94,6 +96,7 @@ class BaseBot(object):
         elif message_type == MessageType.BROADCAST_GAME_FINISHED:
             self.won_stich_in_game = []
             self.handle_game_finished()
+            self.match = False
 
         elif message_type == MessageType.BROADCAST_SESSION_JOINED:
             player = data["player"]
@@ -110,6 +113,7 @@ class BaseBot(object):
 
             round_points = self.calculate_roud_points(data["score"], won_stich)
 
+            self.match = round_points >= MATCH_POINTS
             self.handle_stich(winner, round_points, total_points, data['playedCards'])
 
         elif message_type == MessageType.BROADCAST_TOURNAMENT_STARTED:
