@@ -326,9 +326,14 @@ class PlayStrategy:
         save_model(self.trumpf_model, "{}{}_model{}.json".format(log_dir, trumpf_model_name, file_addition), True)
         save_weights(self.trumpf_model, "{}{}_weights{}.h5".format(log_dir, trumpf_model_name, file_addition))
 
+    def all_round_parameters_set(self):
+        return self.game_old_observation is not None \
+               and self.game_action is not None \
+               and self.game_reward is not None
+
     def model_choose_card(self, inputs, hand_cards):
 
-        if self.game_old_observation is not None and self.game_action is not None and self.game_reward is not None:
+        if self.all_round_parameters_set():
             self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 0))
 
         q = self.game_model.predict(inputs)
