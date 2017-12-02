@@ -85,7 +85,7 @@ class Bot(BaseBot):
     """
 
     def __init__(self, server_address, name, chosen_team_index=0):
-        super(Bot, self).__init__(server_address, name, chosen_team_index)
+        super().__init__(server_address, name, chosen_team_index)
         self.game_strategy = PlayStrategy()
 
         self.played_cards = []
@@ -119,7 +119,7 @@ class Bot(BaseBot):
 
     def handle_game_finished(self):
         self.played_cards = []
-        super(Bot, self).handle_game_finished()
+        super().handle_game_finished()
         self.game_strategy.game_finished(self.match)
 
 

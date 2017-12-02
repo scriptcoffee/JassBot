@@ -13,7 +13,7 @@ class Bot(BaseBot):
     """
 
     def __init__(self, server_address, name, chosen_team_index=0):
-        super(Bot, self).__init__(server_address, name, chosen_team_index)
+        super().__init__(server_address, name, chosen_team_index)
         self.game_strategy = PlayStrategy()
 
         self.start()
