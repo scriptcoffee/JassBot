@@ -311,14 +311,20 @@ class PlayStrategy:
             self.epsilon *= self.epsilon_decay
 
     def save_weights_and_models(self):
-        file_addition = str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-        save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".h5")
-        save_model(self.game_model, "./logs/config/game_network_model_" + file_addition + ".json", True)
-        save_weights(self.game_model, "./logs/config/game_network_weights_" + file_addition + ".h5")
+        log_dir = "./logs/config/"
 
-        save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".h5")
-        save_model(self.trumpf_model, "./logs/config/trumpf_network_model_" + file_addition + ".json", True)
-        save_weights(self.trumpf_model, "./logs/config/trumpf_network_weights_" + file_addition + ".h5")
+        game_model_name = "game_network"
+        trumpf_model_name = "trumpf_network"
+
+        file_addition = "_" + str(self.game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
+
+        save_model(self.game_model, "{}{}_model{}.h5".format(log_dir, game_model_name, file_addition))
+        save_model(self.game_model, "{}{}_model{}.json".format(log_dir, game_model_name, file_addition), True)
+        save_weights(self.game_model, "{}{}_weights{}.h5".format(log_dir, game_model_name, file_addition))
+
+        save_model(self.trumpf_model, "{}{}_model{}.h5".format(log_dir, trumpf_model_name, file_addition))
+        save_model(self.trumpf_model, "{}{}_model{}.json".format(log_dir, trumpf_model_name, file_addition), True)
+        save_weights(self.trumpf_model, "{}{}_weights{}.h5".format(log_dir, trumpf_model_name, file_addition))
 
     def model_choose_card(self, inputs, hand_cards):
 
