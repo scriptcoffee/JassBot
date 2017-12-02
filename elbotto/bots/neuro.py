@@ -334,12 +334,8 @@ class PlayStrategy:
                 card_to_play = hand_card
                 card_q = q[0, hand_card.id]
 
-        card_to_play_rank = 0
-        for prob in q[0]:
-            if prob > card_q:
-                card_to_play_rank += 1
-
         if (self.step % 1000) == 0:
+            card_to_play_rank = len([prob for prob in q[0] if prob > card_q])
             summary = tf.Summary(value=[tf.Summary.Value(tag="card_accuracy", simple_value=card_to_play_rank)])
             self.writer.add_summary(summary, self.step)
         self.step += 1
