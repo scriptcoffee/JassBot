@@ -223,7 +223,7 @@ class PlayStrategy:
 
             trumpf_reward = evaluate_trumpf_choise(hand_cards, trumpf_nr, geschoben)
 
-            self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward/REWARD_SCALING_FACTOR, 1))
+            self.trumpf_memory.append((inputs, trumpf_nr, trumpf_reward / self.REWARD_SCALING_FACTOR, 1))
 
             if not (geschoben and trumpf_nr == 6):
                 return trumpf
@@ -258,10 +258,10 @@ class PlayStrategy:
         return card_to_play
 
     def card_rejected(self):
-        self.game_reward = CARD_REJECTED_PENALTY / REWARD_SCALING_FACTOR
+        self.game_reward = CARD_REJECTED_PENALTY / self.REWARD_SCALING_FACTOR
 
     def stich_reward(self, round_points):
-        self.game_reward = round_points / REWARD_SCALING_FACTOR
+        self.game_reward = round_points / self.REWARD_SCALING_FACTOR
 
     def game_finished(self, isMatch):
         self.round_memory.append((self.game_old_observation, self.game_action, self.game_reward, 1))
@@ -269,7 +269,7 @@ class PlayStrategy:
             round = []
             for stich in self.round_memory:
                 stich = list(stich)
-                stich[2] += (self.MATCH_REWARD / 9) / REWARD_SCALING_FACTOR
+                stich[2] += (self.MATCH_REWARD / 9) / self.REWARD_SCALING_FACTOR
                 round.append(stich)
             self.game_memory.append(round)
         else:
