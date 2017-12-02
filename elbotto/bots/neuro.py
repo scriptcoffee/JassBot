@@ -78,51 +78,6 @@ TRUMPF_DICT = {
 }
 
 
-class Bot(BaseBot):
-    """
-    Trivial bot using DEFAULT_TRUMPF and randomly returning a card available in the hand.
-    This is a simple port of the original Java Script implementation
-    """
-
-    def __init__(self, server_address, name, chosen_team_index=0):
-        super().__init__(server_address, name, chosen_team_index)
-        self.game_strategy = PlayStrategy()
-
-        self.played_cards = []
-
-        self.start()
-
-    def handle_request_trumpf(self, geschoben):
-        # CHALLENGE2017: Ask the brain which gameMode to choose
-        return self.game_strategy.choose_trumpf(self.hand_cards, geschoben)
-
-    def handle_stich(self, winner, round_points, total_points, played_cards):
-        won_stich = self.in_my_team(winner)
-        self.played_cards.extend(played_cards)
-        self.game_strategy.stich_reward(round_points)
-        logger.debug("Stich: Won:%s, Winner: %s, Round points: %s, Total points: %s", won_stich, winner, round_points, total_points)
-
-    def handle_reject_card(self, card):
-        # CHALLENGE2017: When server sends this, you send an invalid card... this should never happen!
-        # Server will send "REQUEST_CARD" after this once.
-        # Make sure you choose a valid card or your bot will loose the game
-        logger.debug(" ######   SERVER REJECTED CARD   #######")
-        logger.debug("Rejected card: %s", card)
-        logger.debug("Hand Cards: %s", self.hand_cards)
-        logger.debug("cardsAtTable %s", self.game_strategy.cardsAtTable)
-        logger.debug("Gametype: %s", self.game_type)
-        self.game_strategy.card_rejected()
-
-    def handle_request_card(self, table_cards):
-        # CHALLENGE2017: Ask the brain which card to choose
-        return self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type, self.played_cards)
-
-    def handle_game_finished(self):
-        self.played_cards = []
-        super().handle_game_finished()
-        self.game_strategy.game_finished(self.match)
-
-
 class PlayStrategy:
     TRUMPF_INPUT_LAYER = 37
     TRUMPF_FIRST_LAYER = 37

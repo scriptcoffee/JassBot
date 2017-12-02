@@ -1,22 +1,23 @@
 import threading
 
-from elbotto import launcher
 from elbotto.bots import stochastic
 from elbotto.bots import neuro
+from elbotto.basebot import BaseBot
 
 DEFAULT_BOT_NAME = "El botto del jasso"
 
 DEFAULT_SERVER_NAME = "ws://127.0.0.1:3000"
 
 
-def launch(bot_class, bot_name, server_address=DEFAULT_SERVER_NAME):
-    bot_class(server_address, bot_name)
+def launch(strategy, bot_name, server_address=DEFAULT_SERVER_NAME):
+    BaseBot(server_address, bot_name, strategy)
+
 
 def start_bots():
-    threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": DEFAULT_BOT_NAME}).start()
-    threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": DEFAULT_BOT_NAME}).start()
-    threading.Thread(target=launch, kwargs={"bot_class": stochastic.Bot, "bot_name": "NeuroBot"}).start()
-    t = threading.Thread(target=launch, kwargs={"bot_class": neuro.Bot, "bot_name": "NeuroBot"})
+    threading.Thread(target=launch, kwargs={"strategy": stochastic.PlayStrategy, "bot_name": DEFAULT_BOT_NAME}).start()
+    threading.Thread(target=launch, kwargs={"strategy": stochastic.PlayStrategy, "bot_name": DEFAULT_BOT_NAME}).start()
+    threading.Thread(target=launch, kwargs={"strategy": stochastic.PlayStrategy, "bot_name": "NeuroBot"}).start()
+    t = threading.Thread(target=launch, kwargs={"strategy": neuro.PlayStrategy, "bot_name": "NeuroBot"})
 
     t.start()
     t.join()

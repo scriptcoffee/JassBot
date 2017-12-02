@@ -29,7 +29,7 @@ class BaseBot(object):
 
     connection = None
 
-    def __init__(self, server_address, name, chosen_team_index=0):
+    def __init__(self, server_address, name, strategy, chosen_team_index=0):
         self.name = name
         self.session_name = name
         self.server_address = server_address
@@ -37,10 +37,15 @@ class BaseBot(object):
 
         self.teams = None
         self.hand_cards= []
+        self.played_cards = []
         self.won_stich_in_game = []
         self.last_round_points = 0
         self.opponent_last_round_points = 0
         self.match = False
+
+        self.game_strategy = strategy()
+
+        self.start()
 
     def start(self):
         logger.info("Connecting to %s", self.server_address)
@@ -165,21 +170,23 @@ class BaseBot(object):
         self.update_hand(played_cards)
 
     def handle_request_trumpf(self, geschoben):
-        # CHALLENGE2017: Ask the brain which gameMode to choose
-        return DEFAULT_TRUMPF
+        return self.game_strategy.choose_trumpf(self.hand_cards, geschoben)
 
     def handle_trumpf(self, game_type):
         self.geschoben = game_type.mode == "SCHIEBE"  # just remember if it's a geschoben match
         self.game_type = game_type
 
     def handle_stich(self, winner, round_points, total_points, played_cards):
-        # Do nothing with that :-)
-        pass
+        won_stich = self.in_my_team(winner)
+        self.played_cards.extend(played_cards)
+        self.game_strategy.stich_reward(round_points)
+        logger.debug("Stich: Won:%s, Winner: %s, Round points: %s, Total points: %s", won_stich, winner, round_points, total_points)
 
     def handle_game_finished(self):
         self.last_round_points = 0
         self.opponent_last_round_points = 0
-        pass
+        self.played_cards = []
+        self.game_strategy.game_finished(self.match)
 
     def handle_reject_card(self, data):
         # CHALLENGE2017: When server sends this, you send an invalid card... this should never happen!
@@ -189,11 +196,10 @@ class BaseBot(object):
         logger.warning("Rejected card: %s", data)
         logger.warning("Hand Cards: %s", self.hand_cards)
         logger.warning("Gametype: %s", self.game_type)
+        self.game_strategy.card_rejected()
 
     def handle_request_card(self, table_cards):
-        # CHALLENGE2017: Ask the brain which card to choose
-        card = self.hand_cards[0]
-        return card
+        return self.game_strategy.choose_card(self.hand_cards, table_cards, self.game_type, self.played_cards)
 
     def in_my_team(self, winner):
         return self.my_team.is_member(winner)
