@@ -66,7 +66,7 @@ TRUMPF_DICT = {0: set_diamonds,
 
 
 def trumpf_converter(trumpf_code):
-    if trumpf_code in TRUMPF_DICT.keys():
+    if (isinstance(trumpf_code, int) or isinstance(trumpf_code, str)) and trumpf_code in TRUMPF_DICT.keys():
         trumpf_card = TRUMPF_DICT[trumpf_code]()
     else:
         return None

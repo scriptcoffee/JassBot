@@ -69,6 +69,12 @@ def test_trumpf_converter_to_high_number():
     assert trumpf_converter(trumpf_card) is None
 
 
+def test_trumpf_converter_list():
+    trumpf_card = []
+
+    assert trumpf_converter(trumpf_card) is None
+
+
 def test_trumpf_converter_convert_color_code():
     trumpf_color_code_list_from_logs = [[0, "DIAMONDS"],
                                         [1, "HEARTS"],
