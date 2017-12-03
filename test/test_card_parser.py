@@ -41,7 +41,7 @@ def test_create_card_high_number():
 
 
 def test_create_card_lower_case():
-    card = create_card("hd")
+    card = create_card("ha")
 
     assert card is None
 
@@ -53,7 +53,7 @@ def test_create_card_empty_object():
 
 
 def test_create_card_int():
-    card = create_card(15)
+    card = create_card(11)
 
     assert card is None
 
