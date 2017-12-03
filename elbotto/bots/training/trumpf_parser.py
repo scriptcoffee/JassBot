@@ -1,4 +1,5 @@
 import json
+import os
 from keras import backend as k
 from elbotto.bots.training import trumpf_training as training_trumpf_network
 from elbotto.bots.training.trumpf_converter import trumpf_converter
@@ -8,6 +9,7 @@ from elbotto.bots.training.parser import print_trumpf, print_table
 
 
 def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):
+    os.chdir(os.path.dirname(__file__))
     if check_path(data_path) is None:
         return
     files = check_file(data_path, data_file)
@@ -74,10 +76,11 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
 
                     trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
                     if 'tss' in rounds['rounds'][round]:
-                        tss += 1
-                        hand_list.append(table[trumpf_decider])
-                        trumpf_list.append(trumpf_converter(6))
+                        if tss % 2 == 0:
+                            hand_list.append(table[trumpf_decider])
+                            trumpf_list.append(trumpf_converter(6))
                         trumpf_decider = (trumpf_decider + 2) % amount_players
+                        tss += 1
                     hand_list.append(table[trumpf_decider])
                     trumpf_list.append(game_type)
 
