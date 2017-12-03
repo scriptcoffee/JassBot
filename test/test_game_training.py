@@ -224,7 +224,24 @@ def test_create_input_no_hand_cards():
     assert input_layer is None
 
 
-def test_create_input_false_played_cards():
+def test_create_input_pure_list_of_cards_for_played_cards():
+    expected_input_layer = [[0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                             1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             0, 0, 0, 0, 0, 1, ]]
+
     hand_cards = [create_card("H9"),
                   create_card("HJ"),
                   create_card("S8"),
@@ -256,7 +273,7 @@ def test_create_input_false_played_cards():
 
     input_layer = create_input(hand_cards, table_cards, played_cards, game_type_undeufe)
 
-    assert input_layer is None
+    assert (input_layer == expected_input_layer).all()
 
 
 def test_create_target_true_validation_list():

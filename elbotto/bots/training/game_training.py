@@ -69,6 +69,8 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
     if len(hand_cards) == 0:
         return None
     for card in hand_cards:
+        if card is None:
+            return None
         inputs[card.id] = 1
 
     for x in range(len(table_cards)):
@@ -76,10 +78,14 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
         inputs[card.id + ((x + 1) * CARD_SET)] = 1
 
     if len(played_cards) > 0 and isinstance(played_cards[0], CardParser):
-        return None
-    for player_of_cards in range(len(played_cards)):
-        for played_card in played_cards[player_of_cards]:
+        for played_card in played_cards:
             inputs[(4 * CARD_SET) + played_card.id] = 1
+    else:
+        for player_of_cards in range(len(played_cards)):
+            if played_cards[player_of_cards] is None:
+                break
+            for played_card in played_cards[player_of_cards]:
+                inputs[(4 * CARD_SET) + played_card.id] = 1
 
     if game_type.mode == "TRUMPF":
         inputs[game_type.trumpf_color.value + trumpf_offset] = 1
