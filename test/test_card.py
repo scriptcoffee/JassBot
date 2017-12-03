@@ -1,6 +1,5 @@
 from elbotto.card import Color, Card, CARD_OFFSET, CARDS_PER_COLOR
 
-import pytest
 
 def test_from_idx():
     for color in Color:
@@ -9,4 +8,3 @@ def test_from_idx():
             idx_card = Card.form_idx(card.id)
 
             assert card == idx_card
-

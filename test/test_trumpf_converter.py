@@ -1,8 +1,9 @@
+import pytest
 from elbotto.bots.training.trumpf_converter import Trumpf, TrumpfCard, TrumpfColor
 from elbotto.bots.training.trumpf_converter import trumpf_converter, has_code_valid_format
 
 
-def test_class_trumpfcolof_create():
+def test_class_trumpfcolor_create():
     trumpfcolor = TrumpfColor("RAINBOW", 20)
 
     assert trumpfcolor.name == "RAINBOW"
@@ -17,20 +18,14 @@ def test_class_trumpfcard_create():
     assert trumpf.trumpf_color.value == 20
 
 
-def test_has_code_valid_format_string():
-    assert has_code_valid_format("test") is True
-
-
-def test_has_code_valid_format_int():
-    assert has_code_valid_format(15) is True
-
-
-def test_has_code_valid_format_none():
-    assert has_code_valid_format(None) is False
-
-
-def test_has_code_valid_format_list():
-    assert has_code_valid_format([]) is False
+@pytest.mark.parametrize("input_code, expected_value", [
+    ("test", True),
+    (15, True),
+    (None, False),
+    ([], False)
+])
+def test_has_code_valid_format_eval(input_code, expected_value):
+    assert has_code_valid_format(input_code) is expected_value
 
 
 def test_trumpf_converter_by_number():
@@ -101,9 +96,9 @@ def test_trumpf_converter_convert_color_code():
         assert trumpf_color_code_list_from_logs[i][1] == trumpf_color_code_list_from_server[j][1]
 
 
-def test_trumpf_converter_not_in_list():
-    assert trumpf_converter("ACRON") is None
-
-
-def test_trumpf_converter_to_high_number():
-    assert trumpf_converter(7) is None
+@pytest.mark.parametrize("input_value, expected_value", [
+    ("ACRON", None),
+    (7, None)
+])
+def test_trumpf_converter_invalid_values(input_value, expected_value):
+    assert trumpf_converter(input_value) is expected_value

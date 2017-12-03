@@ -1,6 +1,7 @@
-from elbotto.bots.training.game_training import create_input, create_target
+import pytest
 from elbotto.bots.training.card_parser import create_card
 from elbotto.bots.training.trumpf_converter import trumpf_converter
+from elbotto.bots.training.game_training import create_input, create_target
 
 
 def test_create_input_no_played_cards():
@@ -30,9 +31,7 @@ def test_create_input_no_played_cards():
                   create_card("HA"),
                   create_card("SK"),
                   create_card("DJ")]
-
     table_cards = [create_card("D10"), create_card("DK"), create_card("DA")]
-
     played_cards = []
     game_type_diamonds = trumpf_converter(0)
 
@@ -63,9 +62,7 @@ def test_create_input_valid_cards():
                   create_card("HJ"),
                   create_card("S8"),
                   create_card("SK")]
-
     table_cards = [create_card("C8")]
-
     played_cards = [[create_card("C10"),
                      create_card("H6"),
                      create_card("DJ"),
@@ -114,9 +111,7 @@ def test_create_input_no_card_on_table():
     hand_cards = [create_card("H9"),
                   create_card("HJ"),
                   create_card("S8")]
-
     table_cards = []
-
     played_cards = [[create_card("C10"),
                      create_card("H6"),
                      create_card("DJ"),
@@ -175,9 +170,7 @@ def test_create_input_no_cards_per_player_played():
                   create_card("HA"),
                   create_card("SK"),
                   create_card("DJ")]
-
     table_cards = [create_card("D10"), create_card("DK"), create_card("DA")]
-
     played_cards = [[], [], [], []]
     game_type_clubs = trumpf_converter(3)
 
@@ -188,34 +181,16 @@ def test_create_input_no_cards_per_player_played():
 
 def test_create_input_no_hand_cards():
     hand_cards = []
-
     table_cards = [create_card("H9"),
                    create_card("HJ"),
                    create_card("S8")]
-
     played_cards = [[create_card("C10"),
-                     create_card("H6"),
-                     create_card("DJ"),
-                     create_card("D10"),
-                     create_card("DK"),
                      create_card("DA")],
                     [create_card("CJ"),
-                     create_card("HA"),
-                     create_card("HQ"),
-                     create_card("D9"),
-                     create_card("D8"),
                      create_card("D6")],
                     [create_card("DQ"),
-                     create_card("D7"),
-                     create_card("C6"),
-                     create_card("CQ"),
-                     create_card("CA"),
                      create_card("C9")],
                     [create_card("S6"),
-                     create_card("CK"),
-                     create_card("C8"),
-                     create_card("H7"),
-                     create_card("SK"),
                      create_card("SJ")]]
     game_type_obeabe = trumpf_converter(4)
 
@@ -246,9 +221,7 @@ def test_create_input_pure_list_of_cards_for_played_cards():
                   create_card("HJ"),
                   create_card("S8"),
                   create_card("SK")]
-
     table_cards = [create_card("C8")]
-
     played_cards = [create_card("C10"),
                     create_card("H6"),
                     create_card("DJ"),
@@ -285,19 +258,10 @@ def test_create_target_true_validation_list():
     assert (target_list == output_layer).all()
 
 
-def test_create_target_no_card():
-    target_list = create_target("")
-
-    assert target_list is None
-
-
-def test_create_target_string():
-    target_list = create_target("CJ")
-
-    assert target_list is None
-
-
-def test_create_target_int():
-    target_list = create_target(14)
-
-    assert target_list is None
+@pytest.mark.parametrize("test_input, expected", [
+    ("", None),
+    ("CJ", None),
+    (14, None)
+])
+def test_create_target_primitive_input(test_input, expected):
+    assert create_target(test_input) == expected

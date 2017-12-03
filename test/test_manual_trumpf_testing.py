@@ -1,3 +1,4 @@
+import pytest
 from elbotto.bots.training.manual_trumpf_testing import create_test_matrix
 
 
@@ -39,25 +40,10 @@ def test_create_test_matrix_invalid_pushed_value():
     assert (result == expected_input_matrix).all()
 
 
-def test_create_test_matrix_eight_hand_cards():
-    hand_cards = ["H6", "H8", "H9", "HJ", "CA", "S9", "S10", "D8"]
-
-    result = create_test_matrix(hand_cards)
-
-    assert result is None
-
-
-def test_create_test_matrix_ten_hand_cards():
-    hand_cards = ["C6", "C8", "H6", "H8", "H9", "HJ", "CA", "S9", "S10", "D8"]
-
-    result = create_test_matrix(hand_cards)
-
-    assert result is None
-
-
-def test_create_test_matrix_no_hand_cards():
-    hand_cards = []
-
-    result = create_test_matrix(hand_cards)
-
-    assert result is None
+@pytest.mark.parametrize("input_cards, expected_value", [
+    (["H6", "H8", "H9", "HJ", "CA", "S9", "S10", "D8"], None),
+    (["C6", "C8", "H6", "H8", "H9", "HJ", "CA", "S9", "S10", "D8"], None),
+    ([], None)
+])
+def test_create_test_matrix_not_nine_hand_cards(input_cards, expected_value):
+    assert create_test_matrix(input_cards) == expected_value

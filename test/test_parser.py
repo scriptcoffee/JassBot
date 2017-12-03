@@ -1,18 +1,16 @@
 import json
-from elbotto.bots.training.parser import get_trumpf, get_remaining_hand_cards, complete_hand_cards_with_stiches
-from elbotto.bots.training.parser import check_path, check_file, print_trumpf, print_table
+import pytest
 from elbotto.bots.training.card_parser import create_card
+from elbotto.bots.training.parser import check_path, check_file, print_trumpf, print_table
+from elbotto.bots.training.parser import get_trumpf, get_remaining_hand_cards, complete_hand_cards_with_stiches
 
 
-def test_check_path_false_dir():
-    assert check_path("/bla/") is None
-
-
-def test_check_path_valid_dir():
-    input_dir = "./test/parser_test/"
-    result = check_path("./test/parser_test/")
-
-    assert result == input_dir
+@pytest.mark.parametrize("input_path, expected", [
+    ("/bla/", None),
+    ("./test/parser_test/", "./test/parser_test/")
+])
+def test_check_path_eval_dir(input_path, expected):
+    assert check_path(input_path) == expected
 
 
 def test_check_file_invalid_inputs():
@@ -47,7 +45,6 @@ def test_get_remaining_hand_cards_empty_hands():
     end_hands = [{'hand': []}, {'hand': []}, {'hand': []}, {'hand': []}]
     amount_player = len(end_hands)
     table = get_remaining_hand_cards(end_hands, amount_player, table)
-    print("Table: ".format(table))
 
     assert table == [[], [], [], []]
 
@@ -147,28 +144,13 @@ def test_complete_hand_cards_with_stiches_part_fully_hands():
 
 
 def test_print_trumpf_false_object():
-    game_type = "TRUMPF"
-    output = print_trumpf(game_type)
-
-    assert output == 0
+    assert print_trumpf("TRUMPF") == 0
 
 
-def test_print_table_false_object():
-    table = "Hello Test"
-    output = print_table(table)
-
-    assert output == 0
-
-
-def test_print_table_empty_hands():
-    table = [[], [], [], []]
-    output = print_table(table)
-
-    assert output == 0
-
-
-def test_print_table_no_players():
-    table = []
-    output = print_table(table)
-
-    assert output == 0
+@pytest.mark.parametrize("input_value, expected_value", [
+    ("Hello Test", 0),
+    ([[], [], [], []], 0),
+    ([], 0)
+])
+def test_print_table_eval(input_value, expected_value):
+    assert print_table(input_value) == expected_value
