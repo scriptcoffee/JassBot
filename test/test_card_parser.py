@@ -1,5 +1,25 @@
-from elbotto.bots.training.card_parser import create_card
+from elbotto.bots.training.card_parser import create_card, is_card_invalid
 from elbotto.card import Card
+
+
+def test_is_card_invalid_empty_object():
+    assert is_card_invalid("") is True
+
+
+def test_is_card_invalid_int():
+    assert is_card_invalid(11) is True
+
+
+def test_is_card_invalid_one_symbole():
+    assert is_card_invalid("H") is True
+
+
+def test_is_card_invalid_none():
+    assert is_card_invalid(None) is True
+
+
+def test_is_card_invalid_valid_card():
+    assert is_card_invalid("OI") is False
 
 
 def test_create_card_valid_head_card():
@@ -42,29 +62,5 @@ def test_create_card_high_number():
 
 def test_create_card_lower_case():
     card = create_card("ha")
-
-    assert card is None
-
-
-def test_create_card_empty_object():
-    card = create_card("")
-
-    assert card is None
-
-
-def test_create_card_int():
-    card = create_card(11)
-
-    assert card is None
-
-
-def test_create_card_one_symbole():
-    card = create_card("H")
-
-    assert card is None
-
-
-def test_create_card_none():
-    card = create_card(None)
 
     assert card is None

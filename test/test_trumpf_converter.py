@@ -1,4 +1,36 @@
-from elbotto.bots.training.trumpf_converter import trumpf_converter, Trumpf, TrumpfCard
+from elbotto.bots.training.trumpf_converter import Trumpf, TrumpfCard, TrumpfColor
+from elbotto.bots.training.trumpf_converter import trumpf_converter, has_code_valid_format
+
+
+def test_class_trumpfcolof_create():
+    trumpfcolor = TrumpfColor("RAINBOW", 20)
+
+    assert trumpfcolor.name == "RAINBOW"
+    assert trumpfcolor.value == 20
+
+
+def test_class_trumpfcard_create():
+    trumpf = TrumpfCard("JOKER", "RAINBOW", 20)
+
+    assert trumpf.mode == "JOKER"
+    assert trumpf.trumpf_color.name == "RAINBOW"
+    assert trumpf.trumpf_color.value == 20
+
+
+def test_has_code_valid_format_string():
+    assert has_code_valid_format("test") is True
+
+
+def test_has_code_valid_format_int():
+    assert has_code_valid_format(15) is True
+
+
+def test_has_code_valid_format_none():
+    assert has_code_valid_format(None) is False
+
+
+def test_has_code_valid_format_list():
+    assert has_code_valid_format([]) is False
 
 
 def test_trumpf_converter_by_number():
@@ -51,30 +83,6 @@ def test_trumpf_converter_by_name():
             assert trumpf.trumpf_color.value == ""
 
 
-def test_trumpf_converter_no_int():
-    trumpf_code = "test"
-
-    assert trumpf_converter(trumpf_code) is None
-
-
-def test_trumpf_converter_none():
-    trumpf_code = None
-
-    assert trumpf_converter(trumpf_code) is None
-
-
-def test_trumpf_converter_to_high_number():
-    trumpf_card = 7
-
-    assert trumpf_converter(trumpf_card) is None
-
-
-def test_trumpf_converter_list():
-    trumpf_card = []
-
-    assert trumpf_converter(trumpf_card) is None
-
-
 def test_trumpf_converter_convert_color_code():
     trumpf_color_code_list_from_logs = [[0, "DIAMONDS"],
                                         [1, "HEARTS"],
@@ -93,9 +101,9 @@ def test_trumpf_converter_convert_color_code():
         assert trumpf_color_code_list_from_logs[i][1] == trumpf_color_code_list_from_server[j][1]
 
 
-def test_class_trumpfcard_create():
-    trumpf = TrumpfCard("JOKER", "RAINBOW", 20)
+def test_trumpf_converter_not_in_list():
+    assert trumpf_converter("ACRON") is None
 
-    assert trumpf.mode == "JOKER"
-    assert trumpf.trumpf_color.name == "RAINBOW"
-    assert trumpf.trumpf_color.value == 20
+
+def test_trumpf_converter_to_high_number():
+    assert trumpf_converter(7) is None
