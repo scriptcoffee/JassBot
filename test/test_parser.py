@@ -100,6 +100,10 @@ def test_complete_hand_cards_with_stiches_valid_eval(input_stich_list, input_tab
     assert table == target_table
 
 
+def test_print_trumpf_false_object():
+    assert print_trumpf("TRUMPF") == 0
+
+
 @pytest.mark.parametrize("input_value, expected_value", [
     ("Hello Test", 0),
     ([[], [], [], []], 0),

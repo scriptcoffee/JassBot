@@ -133,7 +133,6 @@ def get_active_playing_cards(stich, amount_players, learning_player):
         current_player = (current_player - 1) % amount_players
         player_seat += 1
 
-    print(player_seat)
     target_card = get_target_card(player_seat, stich)
 
     return cards_on_table, target_card
