@@ -13,15 +13,12 @@ def test_check_path_eval_dir(input_path, expected):
     assert check_path(input_path) == expected
 
 
-def test_check_file_invalid_inputs():
-    assert check_file("./test/", "*.log") is None
-
-
-def test_check_file_valid_file():
-    input_string = ["./test/parser_test/testfile.txt"]
-    result = check_file("./test/parser_test/", "testfile.txt")
-
-    assert result == input_string
+@pytest.mark.parametrize("input_path, input_file, expected_value", [
+    ("./test/", "*.log", None),
+    ("./test/parser_test/", "testfile.txt", ["./test/parser_test/testfile.txt"])
+])
+def test_check_file_eval(input_path, input_file, expected_value):
+    assert check_file(input_path, input_file) == expected_value
 
 
 def test_get_trumpf_invalid():
@@ -40,22 +37,13 @@ def test_get_trumpf_valid():
     assert trumpf.mode == "OBEABE"
 
 
-def test_get_remaining_hand_cards_empty_hands():
-    table = []
-    end_hands = [{'hand': []}, {'hand': []}, {'hand': []}, {'hand': []}]
-    amount_player = len(end_hands)
-    table = get_remaining_hand_cards(end_hands, amount_player, table)
-
-    assert table == [[], [], [], []]
-
-
-def test_get_remaining_hand_cards_no_hand():
-    table = []
-    end_hands = [{'feet': []}, {'hand': []}, {'hand': []}, {'hand': []}]
-    amount_player = len(end_hands)
-    table = get_remaining_hand_cards(end_hands, amount_player, table)
-
-    assert table == []
+@pytest.mark.parametrize("input_hands, input_table, expected_table", [
+    ([{'hand': []}, {'hand': []}, {'hand': []}, {'hand': []}], [], [[], [], [], []]),
+    ([{'feet': []}, {'hand': []}, {'hand': []}, {'hand': []}], [], [])
+])
+def test_get_remaining_hand_cards_eval(input_hands, input_table, expected_table):
+    amount_player = len(input_hands)
+    assert get_remaining_hand_cards(input_hands, amount_player, input_table) == expected_table
 
 
 def test_get_remaining_hand_cards_handcards():
@@ -80,71 +68,36 @@ def test_get_remaining_hand_cards_handcards():
     assert table == target_table
 
 
-def test_complete_hand_cards_with_stiches_empty_table():
-    stich_list = [{'cards': ['SJ', 'S10', 'S9', 'SA'], 'first': 0, 'points': 55, 'win': 0}]
+@pytest.mark.parametrize("input_stich, amount_players, input_table, expected_value", [
+    ([{'cards': ['SJ', 'S10', 'S9', 'SA'], 'first': 0, 'points': 55, 'win': 0}], 4, [], 0),
+    ([], 4, [[], [], [], []], 0)
+])
+def test_complete_hand_cards_with_stiches_invalid_eval(input_stich, amount_players, input_table, expected_value):
+    assert complete_hand_cards_with_stiches(input_stich, amount_players, input_table) == expected_value
+
+
+@pytest.mark.parametrize("input_stich_list, input_table, expected_stich", [
+    ([{'cards': ['D10', 'S8', 'D7', 'D9'], 'first': 0}, {'cards': ['D6', 'SJ', 'CK', 'CQ'], 'first': 0},
+      {'cards': ['HJ', 'HQ', 'H9', 'HA'], 'first': 0}, {'cards': ['CJ', 'C10', 'S6', 'S9'], 'first': 0}],
+     [[], [], [], []],
+     ['D10', 'D9', 'D7', 'S8', 'D6', 'CQ', 'CK', 'SJ', 'HJ', 'HA', 'H9', 'HQ', 'CJ', 'S9', 'S6', 'C10']),
+    ([{'cards': ['D6', 'SJ', 'S6', 'S9'], 'first': 1}, {'cards': ['HJ', 'HQ', 'H9', 'HA'], 'first': 1},
+      {'cards': ['CJ', 'C10', 'CK', 'CQ'], 'first': 3}],
+     [[create_card("D10")], [create_card("S8")], [create_card("D7")], [create_card("D9")]],
+     ['D10', 'S8', 'D7', 'D9', 'SJ', 'D6', 'S9', 'S6', 'HQ', 'HJ', 'HA', 'H9', 'CQ', 'CK', 'C10', 'CJ']),
+])
+def test_complete_hand_cards_with_stiches_valid_eval(input_stich_list, input_table, expected_stich):
     amount_players = 4
-    table = []
-    table = complete_hand_cards_with_stiches(stich_list, amount_players, table)
-
-    assert table == 0
-
-
-def test_complete_hand_cards_with_stiches_no_stich():
-    stich_list = []
-    amount_players = 4
-    table = [[], [], [], []]
-    table = complete_hand_cards_with_stiches(stich_list, amount_players, table)
-
-    assert table == 0
-
-
-def test_complete_hand_cards_with_stiches_empty_positions_on_table():
-    stich_list = [{'cards': ['D10', 'S8', 'D7', 'D9'], 'first': 0},
-                  {'cards': ['D6', 'SJ', 'CK', 'CQ'], 'first': 0},
-                  {'cards': ['HJ', 'HQ', 'H9', 'HA'], 'first': 0},
-                  {'cards': ['CJ', 'C10', 'S6', 'S9'], 'first': 0}]
-    amount_players = 4
-    table = [[], [], [], []]
 
     target_table = [[], [], [], []]
-    stichs = ['D10', 'D9', 'D7', 'S8',
-              'D6', 'CQ', 'CK', 'SJ',
-              'HJ', 'HA', 'H9', 'HQ',
-              'CJ', 'S9', 'S6', 'C10']
-    for c in range(len(stichs)):
+    for c in range(len(expected_stich)):
         player = c % 4
-        card = create_card(stichs[c])
+        card = create_card(expected_stich[c])
         target_table[player].append(card)
 
-    table = complete_hand_cards_with_stiches(stich_list, amount_players, table)
+    table = complete_hand_cards_with_stiches(input_stich_list, amount_players, input_table)
 
     assert table == target_table
-
-
-def test_complete_hand_cards_with_stiches_part_fully_hands():
-    stich_list = [{'cards': ['D6', 'SJ', 'S6', 'S9'], 'first': 1},
-                  {'cards': ['HJ', 'HQ', 'H9', 'HA'], 'first': 1},
-                  {'cards': ['CJ', 'C10', 'CK', 'CQ'], 'first': 3}]
-    amount_players = 4
-    table = [[create_card("D10")], [create_card("S8")], [create_card("D7")], [create_card("D9")]]
-
-    target_table = [[], [], [], []]
-    stichs = ['D10', 'S8', 'D7', 'D9',
-              'SJ', 'D6', 'S9', 'S6',
-              'HQ', 'HJ', 'HA', 'H9',
-              'CQ', 'CK', 'C10', 'CJ']
-    for c in range(len(stichs)):
-        player = c % 4
-        card = create_card(stichs[c])
-        target_table[player].append(card)
-
-    table = complete_hand_cards_with_stiches(stich_list, amount_players, table)
-
-    assert table == target_table
-
-
-def test_print_trumpf_false_object():
-    assert print_trumpf("TRUMPF") == 0
 
 
 @pytest.mark.parametrize("input_value, expected_value", [

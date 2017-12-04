@@ -1,3 +1,4 @@
+import pytest
 from elbotto.bots.training.manual_game_testing import create_test_matrix
 
 
@@ -28,27 +29,13 @@ def test_create_test_matrix_valid_input():
 
     assert (result == expected_input_layer).all()
 
-
-def test_create_test_matrix_invalid_trumpf():
-    hand_cards = ["CA", "D6", "SJ"]
-    table_cards = ["H6"]
-    played_cards = []
-    game_type = "acorn"
-
-    result = create_test_matrix(hand_cards, table_cards, played_cards, game_type)
-
-    assert result is None
-
-
-def test_create_test_matrix_invalid_hand_cards():
-    hand_cards = ["A", "D", "J"]
-    table_cards = ["H6"]
-    played_cards = []
-    game_type = "HEARTS"
-
-    result = create_test_matrix(hand_cards, table_cards, played_cards, game_type)
-
-    assert result is None
+@pytest.mark.parametrize("input_hand, input_table, input_played_cards, input_game_type, expected", [
+    (["CA", "D6", "SJ"], ["H6"], [], "acorn", None),
+    (["A", "D", "J"], ["H6"], [], "HEARTS", None)
+])
+def test_create_test_matrix_invalid_input(input_hand, input_table, input_played_cards, input_game_type, expected):
+    result = create_test_matrix(input_hand, input_table, input_played_cards, input_game_type)
+    assert result == expected
 
 
 def test_create_test_matrix_empty_table():

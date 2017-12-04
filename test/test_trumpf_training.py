@@ -4,44 +4,19 @@ from elbotto.bots.training.trumpf_converter import trumpf_converter
 from elbotto.bots.training.trumpf_training import create_input, create_target
 
 
-def test_create_input_full_hand():
-    expected_input_layer = [[0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-                             0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
-                             0]]
-
-    hand_cards = [create_card("H9"),
-                  create_card("DK"),
-                  create_card("HQ"),
-                  create_card("C7"),
-                  create_card("SA"),
-                  create_card("H10"),
-                  create_card("S7"),
-                  create_card("CJ"),
-                  create_card("CK")]
-    no_shift = trumpf_converter(2)
-
-    input_layer = create_input(hand_cards, no_shift)
-
-    assert (input_layer == expected_input_layer).all()
-
-
-def test_create_input_hand_pushed():
-    expected_input_layer = [[0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
-                             0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1,
-                             1]]
-
-    hand_cards = [create_card("H9"),
-                  create_card("DK"),
-                  create_card("HQ"),
-                  create_card("C7"),
-                  create_card("SA"),
-                  create_card("H10"),
-                  create_card("S7"),
-                  create_card("CJ"),
-                  create_card("CK")]
-    shift = trumpf_converter(6)
-
-    input_layer = create_input(hand_cards, shift)
+@pytest.mark.parametrize("input_hand_cards, input_is_shifted, expected_input_layer", [
+    ([create_card("H9"), create_card("HQ"), create_card("C7"), create_card("SA"), create_card("S7"),
+      create_card("DA"), create_card("SJ"), create_card("CJ"), create_card("CK")], True,
+     [[0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0]]),
+    ([create_card("H9"), create_card("DK"), create_card("HQ"), create_card("C7"), create_card("SA"),
+      create_card("H10"), create_card("S7"), create_card("CJ"), create_card("CK")], trumpf_converter(2),
+     [[0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0]]),
+    ([create_card("H9"), create_card("DK"), create_card("HQ"), create_card("C7"), create_card("SA"),
+      create_card("H10"), create_card("S7"), create_card("CJ"), create_card("CK")], trumpf_converter(6),
+     [[0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1]])
+])
+def test_create_input_eval(input_hand_cards, input_is_shifted, expected_input_layer):
+    input_layer = create_input(input_hand_cards, input_is_shifted)
 
     assert (input_layer == expected_input_layer).all()
 
@@ -57,31 +32,11 @@ def test_create_input_hand_pushed():
      None),
     ([create_card("DK"), create_card("HQ"), create_card("C7"),
       create_card("SA"), create_card("S7"), create_card("CJ"),
-      create_card("CK"), create_card("H10"),create_card("H10")],
+      create_card("CK"), create_card("H10"), create_card("H10")],
      None)
 ])
 def test_create_input_different_hand_cards(input_hand_cards, expected_value):
     assert create_input(input_hand_cards, trumpf_converter(6)) is expected_value
-
-
-def test_create_input_trumpf_as_boolean():
-    expected_input_layer = [[0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                             0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,
-                             0]]
-
-    hand_cards = [create_card("H9"),
-                  create_card("HQ"),
-                  create_card("C7"),
-                  create_card("SA"),
-                  create_card("S7"),
-                  create_card("DA"),
-                  create_card("SJ"),
-                  create_card("CJ"),
-                  create_card("CK")]
-
-    input_layer = create_input(hand_cards, True)
-
-    assert (input_layer == expected_input_layer).all()
 
 
 def test_create_target_false_string():

@@ -36,6 +36,6 @@ def manuel_test_input_predict(model=None, hand_cards=None, pushed=False):
 # Input your hand cards into the list and set 'pushed' to True if your partner moved the trump decision to you.
 # Set with model that model you want to test.
 if __name__ == '__main__':
-    manuel_test_input_predict(model="./config/trumpf_network_model__2017-12-02_151805.h5",
+    manuel_test_input_predict(model="./config/trumpf_network_model__2017-12-04_180518.h5",
                               hand_cards=["H6", "H8", "H9", "HJ", "HA", "D9", "D10", "S8", "S10"],
-                              pushed=True)
+                              pushed=False)
