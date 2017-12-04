@@ -35,7 +35,7 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
                 game = line[43:]
                 rounds = json.loads(game)
 
-                print("Game: " + str(line))
+                print("Game: {}".format(line))
 
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
@@ -73,9 +73,9 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
             network.train_the_model(hand_list, trumpf_list)
 
     file_addition = datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-    network.save_model("./config/trumpf_network_model" + file_addition + ".h5")
-    network.save_model("./config/trumpf_network_model" + file_addition + ".json", True)
-    network.save_weights("./config/trumpf_network_weights" + file_addition + ".h5")
+    network.save_model("./config/trumpf_network_model{}.h5".format(file_addition))
+    network.save_model("./config/trumpf_network_model{}.json".format(file_addition), True)
+    network.save_weights("./config/trumpf_network_weights{}.h5".format(file_addition))
 
     k.clear_session()
 

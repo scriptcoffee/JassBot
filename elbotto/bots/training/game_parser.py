@@ -34,7 +34,7 @@ def start_game_training(data_path='./data/', data_file='MLAI_8-1_log.txt', netwo
                 game = line[43:]
                 rounds = json.loads(game)
 
-                print("Game: " + str(line))
+                print("Game: {}".format(line))
 
                 amount_rounds = len(rounds['rounds'])
                 amount_players = len(rounds['rounds'][0]['player'])
@@ -109,10 +109,10 @@ def start_game_training(data_path='./data/', data_file='MLAI_8-1_log.txt', netwo
                         network.train_the_model(hand_list, table_list, trumpf_list, target_list)
                         samples += len(hand_list)
 
-        file_addition = str(file_number) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-        network.save_model("./config/game_network_model_" + file_addition + ".h5")
-        network.save_model("./config/game_network_model_" + file_addition + ".json", True)
-        network.save_weights("./config/game_network_weights_" + file_addition + ".h5")
+        file_addition = "{}{}".format(file_number, datetime.now().strftime("__%Y-%m-%d_%H%M%S"))
+        network.save_model("./config/game_network_model_{}.h5".format(file_addition))
+        network.save_model("./config/game_network_model_{}.json".format(file_addition), True)
+        network.save_weights("./config/game_network_weights_{}.h5".format(file_addition))
 
         file_number += 1
 

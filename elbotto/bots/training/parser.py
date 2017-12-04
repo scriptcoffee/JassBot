@@ -65,9 +65,9 @@ def print_trumpf(game_type):
         # print("No trumpf exist!")
         return 0
     if game_type.mode == "TRUMPF":
-        print("trumpf: " + str(game_type.trumpf_color.name))
+        print("trumpf: {}".format(game_type.trumpf_color.name))
     else:
-        print("trumpf: " + str(game_type.mode))
+        print("trumpf: {}".format(game_type.mode))
 
 
 def print_table(table):
@@ -76,10 +76,10 @@ def print_table(table):
             # print("No players on the table or the players have no cards.")
             return 0
         else:
-            print("player0: " + str(table[0]))
-            print("player1: " + str(table[1]))
-            print("player2: " + str(table[2]))
-            print("player3: " + str(table[3]))
+            print("player0: {}".format(table[0]))
+            print("player1: {}".format(table[1]))
+            print("player2: {}".format(table[2]))
+            print("player3: {}".format(table[3]))
     else:
         # print("Table is not a list.")
         return 0

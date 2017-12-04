@@ -25,4 +25,4 @@ class Training:
         else:
             self.q_model.save(path)
             save_type = 'h5'
-        return print("The model saved as " + save_type + ".")
+        return print("The model saved as {}.".format(save_type))

@@ -25,9 +25,9 @@ class GameTraining(Training):
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
-        file_addition = "init" + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-        self.save_model("./config/game_network_model_" + file_addition + ".h5")
-        self.save_weights("./config/game_network_weights_" + file_addition + ".h5")
+        file_addition = "init{}".format(datetime.now().strftime("__%Y-%m-%d_%H%M%S"))
+        self.save_model("./config/game_network_model_{}.h5".format(file_addition))
+        self.save_weights("./config/game_network_weights_{}.h5".format(file_addition))
 
     def define_model(self):
         self.q_model = Sequential()
