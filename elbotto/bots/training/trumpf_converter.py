@@ -49,15 +49,29 @@ def set_schiebe():
 
 
 TRUMPF_DICT = {0: set_diamonds,
+               'DIAMONDS': set_diamonds,
                1: set_hearts,
+               'HEARTS': set_hearts,
                2: set_spades,
+               'SPADES': set_spades,
                3: set_clubs,
+               'CLUBS': set_clubs,
                4: set_obeabe,
+               'OBEABE': set_obeabe,
                5: set_undeufe,
-               6: set_schiebe
+               'UNDEUFE': set_undeufe,
+               6: set_schiebe,
+               'SCHIEBE': set_schiebe
                }
 
 
+def has_code_valid_format(trumpf_code):
+    return isinstance(trumpf_code, int) or isinstance(trumpf_code, str)
+
+
 def trumpf_converter(trumpf_code):
-    trumpf_card = TRUMPF_DICT[trumpf_code]()
+    if has_code_valid_format(trumpf_code) and trumpf_code in TRUMPF_DICT.keys():
+        trumpf_card = TRUMPF_DICT[trumpf_code]()
+    else:
+        return None
     return trumpf_card

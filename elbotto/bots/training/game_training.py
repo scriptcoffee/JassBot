@@ -8,10 +8,11 @@ from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
+from elbotto.bots.training.card_parser import CardParser
 
 
 class GameTraining(Training):
-    def __init__(self, name):
+    def __init__(self, name, log_path):
         super().__init__(name)
         self.game_counter = 0
 
@@ -20,7 +21,7 @@ class GameTraining(Training):
         sess = tf.Session(config=config)
         k.set_session(sess)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=64,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=64,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
@@ -65,11 +66,18 @@ def create_input(hand_cards, table_cards, game_type):
     # Partitional: 1-36 -> hand, 37-72 - first card on table, 73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
     # Status: 0 - no info, 1 - know place of the card
     inputs = np.zeros((150,))
+
+    if len(hand_cards) == 0:
+        return None
     for card in hand_cards:
+        if card is None:
+            return None
         inputs[card.id] = 1
+
     for x in range(0, len(table_cards)):
         c = table_cards[x]
         inputs[c.id + (x + 1)*36] = 1
+
     if game_type.mode == "TRUMPF":
         inputs[game_type.trumpf_color.value + 4 * 36] = 1
     elif game_type.mode == "OBEABE":
@@ -80,6 +88,8 @@ def create_input(hand_cards, table_cards, game_type):
 
 
 def create_target(target_card):
+    if not isinstance(target_card, CardParser):
+        return None
     target_list = np.zeros((36,))
     target_list[target_card.id] = 1
     return np.reshape(target_list, (1, 36))

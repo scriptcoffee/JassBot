@@ -5,6 +5,7 @@ from keras.layers import Dense, Activation
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from elbotto.bots.training.training import Training
+from elbotto.bots.training.trumpf_converter import TrumpfCard, trumpf_converter
 
 INPUT_LAYER = 37
 FIRST_LAYER = 37
@@ -12,10 +13,10 @@ OUTPUT_LAYER = 7
 
 
 class TrumpfTraining(Training):
-    def __init__(self, name):
+    def __init__(self, name, log_path):
         super().__init__(name)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir='./logs', histogram_freq=5, batch_size=32,
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=32,
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
@@ -47,10 +48,16 @@ class TrumpfTraining(Training):
 
 
 def create_input(start_handcards, trumpf):
+    if len(start_handcards) != 9:
+        return None
     inputs = np.zeros((INPUT_LAYER,))
     for card in start_handcards:
+        if inputs[card.id] == 1:
+            return None
         inputs[card.id] = 1
-    if trumpf.mode == "SCHIEBE":
+    if not isinstance(trumpf, TrumpfCard):
+        inputs[INPUT_LAYER - 1] = 0
+    elif trumpf.mode == "SCHIEBE":
         inputs[INPUT_LAYER - 1] = 1
     return np.reshape(inputs, (1, INPUT_LAYER))
 
@@ -78,6 +85,10 @@ CHOOSE_DICT = {"TRUMPF": choose_color,
 
 
 def create_target(trumpf):
+    if not isinstance(trumpf, TrumpfCard):
+        trumpf = trumpf_converter(trumpf)
+    if trumpf is None:
+        return trumpf
     target_layer = np.zeros((OUTPUT_LAYER,))
     CHOOSE_DICT[trumpf.mode](target_layer, trumpf)
     return np.reshape(target_layer, (1, OUTPUT_LAYER))

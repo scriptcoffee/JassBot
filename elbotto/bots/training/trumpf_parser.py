@@ -1,22 +1,31 @@
-import glob
+import os
 import json
 from datetime import datetime
 from keras import backend as k
-from elbotto.bots.training import trumpf_training as training_trumpf_network
+from elbotto.bots.training.trumpf_training import TrumpfTraining
 from elbotto.bots.training.trumpf_converter import trumpf_converter
 from elbotto.bots.training.parser import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
+from elbotto.bots.training.parser import check_path, check_file
 from elbotto.bots.training.parser import print_trumpf, print_table
 
 
-def start_trumpf_training():
+def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs'):
+    os.chdir(os.path.dirname(__file__))
+    if check_path(data_path) is None:
+        return
+    files = check_file(data_path, data_file)
+    if files is None:
+        return
+    if check_path(log_path) is None:
+        return
+
     # create an instance of the model to want to train
-    network = training_trumpf_network.TrumpfTraining("Supervised_Trumpfnetwork")
-    # Import and validate all dates
-    files = glob.glob('./data/*.txt')
+    network = TrumpfTraining(network_name, log_path)
+
     for file_path in files:
         print(file_path)
 
-        with open(file_path, 'r') as file_content:
+        with open(file_path) as file_content:
             lines = file_content.readlines()
 
             hand_list = []
@@ -72,4 +81,4 @@ def start_trumpf_training():
 
 
 if __name__ == '__main__':
-    start_trumpf_training()
+    start_trumpf_training(network_name="Supervised_Trumpfnetwork")
