@@ -1,4 +1,3 @@
-import os
 import json
 from keras import backend as k
 from elbotto.bots.training.card_parser import create_card
@@ -8,8 +7,7 @@ from elbotto.bots.training.parser import check_path, check_file
 from elbotto.bots.training.parser import print_trumpf, print_table
 
 
-def start_game_training(data_path='./data/', data_file='MLAI_8-1_log.txt', network_name='', log_path='./logs/game'):
-    os.chdir(os.path.dirname(__file__))
+def start_game_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/game'):
     if check_path(data_path) is None:
         return
     files = check_file(data_path, data_file)
