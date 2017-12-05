@@ -1,7 +1,6 @@
 import keras
 import numpy as np
 import tensorflow as tf
-from datetime import datetime
 from keras import backend as k
 from keras.models import Sequential
 from keras.layers import Dense, BatchNormalization
@@ -25,9 +24,7 @@ class GameTraining(Training):
                                                        write_graph=False, write_grads=True, write_images=False,
                                                        embeddings_freq=0, embeddings_layer_names=None,
                                                        embeddings_metadata=None)
-        file_addition = "init{}".format(datetime.now().strftime("__%Y-%m-%d_%H%M%S"))
-        self.save_model("./config/game_network_model_{}.h5".format(file_addition))
-        self.save_weights("./config/game_network_weights_{}.h5".format(file_addition))
+        self.save_model_and_weights("game", "init")
 
     def define_model(self):
         self.q_model = Sequential()
@@ -63,7 +60,8 @@ class GameTraining(Training):
 
 def create_input(hand_cards, table_cards, game_type):
     # 150 Inputs (4 x 36 possible cards per hand and 6 trumpf variations).
-    # Partitional: 1-36 -> hand, 37-72 - first card on table, 73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
+    # Partitional: 1-36 -> hand, 37-72 - first card on table,
+    #              73-108 - second card on table, 109-144 - third card on table, 145-150 set trumpf
     # Status: 0 - no info, 1 - know place of the card
     inputs = np.zeros((150,))
 

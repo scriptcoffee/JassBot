@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from datetime import datetime
 from json import dump
 
 
@@ -26,3 +27,11 @@ class Training:
             self.q_model.save(path)
             save_type = 'h5'
         return print("The model saved as {}.".format(save_type))
+
+    def save_model_and_weights(self, network_name="", file_description=""):
+        if file_description is not "":
+            file_description = "_{}".format(file_description)
+        file_addition = "{}{}".format(file_description, datetime.now().strftime("__%Y-%m-%d_%H%M%S"))
+        self.save_model("./config/{}_network_model{}.h5".format(network_name, file_addition))
+        self.save_model("./config/{}_network_model{}.json".format(network_name, file_addition), True)
+        self.save_weights("./config/{}_network_weights{}.h5".format(network_name, file_addition))

@@ -1,6 +1,5 @@
 import os
 import json
-from datetime import datetime
 from keras import backend as k
 from elbotto.bots.training.trumpf_training import TrumpfTraining
 from elbotto.bots.training.trumpf_converter import trumpf_converter
@@ -9,7 +8,7 @@ from elbotto.bots.training.parser import check_path, check_file
 from elbotto.bots.training.parser import print_trumpf, print_table
 
 
-def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs'):
+def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):
     os.chdir(os.path.dirname(__file__))
     if check_path(data_path) is None:
         return
@@ -72,10 +71,7 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
             # call BotNetwork with hand cards and the list of all targets trumpf
             network.train_the_model(hand_list, trumpf_list)
 
-    file_addition = datetime.now().strftime("__%Y-%m-%d_%H%M%S")
-    network.save_model("./config/trumpf_network_model{}.h5".format(file_addition))
-    network.save_model("./config/trumpf_network_model{}.json".format(file_addition), True)
-    network.save_weights("./config/trumpf_network_weights{}.h5".format(file_addition))
+    network.save_model_and_weights("trumpf", "end")
 
     k.clear_session()
 

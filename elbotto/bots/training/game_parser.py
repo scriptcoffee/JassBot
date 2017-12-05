@@ -1,6 +1,5 @@
 import os
 import json
-from datetime import datetime
 from keras import backend as k
 from elbotto.bots.training.game_training import GameTraining
 from elbotto.bots.training.card_parser import create_card
@@ -9,7 +8,7 @@ from elbotto.bots.training.parser import check_path, check_file
 from elbotto.bots.training.parser import print_trumpf, print_table
 
 
-def start_game_training(data_path='./data/', data_file='MLAI_8-1_log.txt', network_name='', log_path='./logs'):
+def start_game_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/game'):
     os.chdir(os.path.dirname(__file__))
     if check_path(data_path) is None:
         return
@@ -109,10 +108,7 @@ def start_game_training(data_path='./data/', data_file='MLAI_8-1_log.txt', netwo
                         network.train_the_model(hand_list, table_list, trumpf_list, target_list)
                         samples += len(hand_list)
 
-        file_addition = "{}{}".format(file_number, datetime.now().strftime("__%Y-%m-%d_%H%M%S"))
-        network.save_model("./config/game_network_model_{}.h5".format(file_addition))
-        network.save_model("./config/game_network_model_{}.json".format(file_addition), True)
-        network.save_weights("./config/game_network_weights_{}.h5".format(file_addition))
+        network.save_model_and_weights("game", file_number)
 
         file_number += 1
 
