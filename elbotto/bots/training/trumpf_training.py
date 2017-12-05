@@ -3,7 +3,7 @@ import numpy as np
 from keras.models import Sequential
 from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
-from keras.optimizers import SGD
+from keras.optimizers import Adam
 from elbotto.bots.training.training import Training
 from elbotto.bots.training.trumpf_converter import TrumpfCard, trumpf_converter
 
@@ -27,8 +27,9 @@ class TrumpfTraining(Training):
         self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01)))
-        sgd = SGD(lr=0.005)
-        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
+        adam = Adam(lr=0.005)
+        self.q_model.compile(loss='categorical_crossentropy', optimizer=adam,
+                             metrics=['categorical_accuracy', 'categorical_crossentropy', 'mean_squared_error', 'acc'])
 
     def train_the_model(self, start_handcards, trumpfs):
         x = np.zeros((np.array(start_handcards).shape[0], INPUT_LAYER))

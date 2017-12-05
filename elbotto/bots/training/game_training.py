@@ -5,12 +5,14 @@ from keras import backend as k
 from keras.models import Sequential
 from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
-from keras.optimizers import SGD
+from keras.optimizers import Adam
 from elbotto.bots.training.training import Training
 from elbotto.bots.training.card_parser import CardParser
 
 INPUT_LAYER = 186
-FIRST_LAYER = 50
+FIRST_LAYER = 560
+SECOND_LAYER = 1680
+THIRD_LAYER = 180
 OUTPUT_LAYER = 36
 
 CARD_SET = 36
@@ -22,7 +24,7 @@ class GameTraining(Training):
         self.game_counter = 0
 
         config = tf.ConfigProto()
-        config.gpu_options.per_process_gpu_memory_fraction = 0.4
+        config.gpu_options.allow_growth = True
         sess = tf.Session(config=config)
         k.set_session(sess)
 
@@ -36,9 +38,14 @@ class GameTraining(Training):
         self.q_model = Sequential()
         self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(THIRD_LAYER, activation='relu', kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01)))
-        sgd = SGD(lr=0.005)
-        self.q_model.compile(loss='mean_squared_error', optimizer=sgd, metrics=['mean_squared_error', 'acc'])
+        adam = Adam(lr=0.005)
+        self.q_model.compile(loss='categorical_crossentropy', optimizer=adam,
+                             metrics=['categorical_accuracy', 'categorical_crossentropy', 'mean_squared_error', 'acc'])
 
     def train_the_model(self, hand_list, table_list, played_card_list, trumpf_list, target_list):
         x = np.zeros((np.array(hand_list).shape[0], INPUT_LAYER))
