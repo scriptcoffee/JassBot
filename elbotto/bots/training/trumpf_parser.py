@@ -23,7 +23,7 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
 
     trumpf_tuples, tss = extract_logfiles(files, network)
 
-    network.save_model_and_weights("trumpf")
+    network.save_model_and_weights("trumpf", "final")
 
     k.clear_session()
 
@@ -94,7 +94,7 @@ def collect_trumpf_per_game(hand_list, rounds, trumpf_list, trumpf_tuples, tss):
 
         trumpf_decider = int(rounds['rounds'][round]['tricks'][0]['first'])
         if 'tss' in rounds['rounds'][round]:
-            if tss % 2 == 0:
+            if tss % 3 != 0:
                 hand_list.append(table[trumpf_decider])
                 trumpf_list.append(trumpf_converter(6))
             trumpf_decider = (trumpf_decider + 2) % amount_players
