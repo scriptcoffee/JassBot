@@ -1,5 +1,6 @@
 import numpy as np
 from json import dump
+from datetime import datetime
 from elbotto.card import Card
 
 
@@ -47,3 +48,11 @@ def prepare_game_input(input_layer_size, game_type, hand_cards, table_cards, pla
     inputs = np.reshape(inputs, (1, input_layer_size))
 
     return inputs
+
+
+def save_weights_and_model(model, game_counter, log_dir, model_name):
+        file_addition = "_" + str(game_counter) + datetime.now().strftime("__%Y-%m-%d_%H%M%S")
+
+        save_model(model, "{}{}_model{}.h5".format(log_dir, model_name, file_addition))
+        save_model(model, "{}{}_model{}.json".format(log_dir, model_name, file_addition), True)
+        save_weights(model, "{}{}_weights{}.h5".format(log_dir, model_name, file_addition))
