@@ -1,7 +1,7 @@
 import threading
 
 from elbotto.bots import stochastic
-from elbotto.bots import neuro
+from elbotto.bots import reinforcement_learning_strategy
 from elbotto.basebot import BaseBot
 
 DEFAULT_BOT_NAME = "El botto del jasso"
@@ -17,7 +17,7 @@ def start_bots():
     threading.Thread(target=launch, kwargs={"strategy": stochastic.PlayStrategy, "bot_name": DEFAULT_BOT_NAME}).start()
     threading.Thread(target=launch, kwargs={"strategy": stochastic.PlayStrategy, "bot_name": DEFAULT_BOT_NAME}).start()
     threading.Thread(target=launch, kwargs={"strategy": stochastic.PlayStrategy, "bot_name": "NeuroBot"}).start()
-    t = threading.Thread(target=launch, kwargs={"strategy": neuro.PlayStrategy, "bot_name": "NeuroBot"})
+    t = threading.Thread(target=launch, kwargs={"strategy": reinforcement_learning_strategy.PlayStrategy, "bot_name": "NeuroBot"})
 
     t.start()
     t.join()
