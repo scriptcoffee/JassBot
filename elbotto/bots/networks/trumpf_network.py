@@ -14,9 +14,9 @@ class TrumpfNetwork:
     OUTPUT_LAYER = 7
 
     REWARD_SCALING_FACTOR = 100
+    LEARNING_RATE = 0.001
 
     def __init__(self):
-        self.learning_rate = 0.001
         self.memory = deque(maxlen=50000)
 
         self.define_model()
@@ -29,7 +29,7 @@ class TrumpfNetwork:
 
         self.model = Model(inputs=self.input, outputs=self.dense_out)
 
-        adam = Adam(lr=self.learning_rate)
+        adam = Adam(lr=self.LEARNING_RATE)
         self.model.compile(optimizer=adam,
                            loss='categorical_crossentropy',
                            metrics=['mean_squared_error', 'categorical_accuracy', 'accuracy'])

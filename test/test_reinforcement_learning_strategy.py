@@ -1,5 +1,4 @@
-from elbotto.bots.helpers.jass_helper import TRUMPF_DICT, evaluate_trumpf_choise
-from elbotto.bots.helpers.keras_helper import prepare_game_input
+from elbotto.bots.helpers.jass_helper import TRUMPF_DICT, prepare_game_input, evaluate_trumpf_choise
 from elbotto.card import Card, Color
 
 

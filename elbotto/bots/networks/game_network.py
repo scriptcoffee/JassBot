@@ -6,7 +6,7 @@ from keras.models import Model
 from keras.layers import Input, Dense, BatchNormalization
 from keras.optimizers import Adam
 from keras.regularizers import l2
-from elbotto.bots.helpers import keras_helper
+from elbotto.bots.helpers import jass_helper
 
 
 class GameNetwork:
@@ -18,15 +18,18 @@ class GameNetwork:
     CARD_REJECTED_PENALTY = -100
     REWARD_SCALING_FACTOR = 100
 
+    GAMMA = 0.95
+    LEARNING_RATE = 0.001
+
     def __init__(self):
-        self.gamma = 0.95
-        self.learning_rate = 0.001
         self.step = 0
 
         self.round_memory = deque(maxlen=50)
         self.memory = deque(maxlen=50000)
 
         self.reset_tmp_memory()
+
+        self.define_model()
 
         self.writer = tf.summary.FileWriter('./logs/')
 
@@ -48,13 +51,13 @@ class GameNetwork:
 
         self.model = Model(inputs=self.input, outputs=self.dense_out)
 
-        adam = Adam(lr=self.learning_rate)
+        adam = Adam(lr=self.LEARNING_RATE)
         self.model.compile(optimizer=adam,
                            loss='categorical_crossentropy',
                            metrics=['mean_squared_error', 'categorical_accuracy', 'accuracy'])
 
     def model_choose_card(self, game_type, hand_cards, table_cards, played_cards):
-        inputs = keras_helper.prepare_game_input(self.INPUT_LAYER, game_type, hand_cards, table_cards, played_cards)
+        inputs = jass_helper.prepare_game_input(self.INPUT_LAYER, game_type, hand_cards, table_cards, played_cards)
         if self.all_round_parameters_set():
             self.round_memory.append((self.old_observation, self.action, self.reward, 0))
 
@@ -111,7 +114,7 @@ class GameNetwork:
                     target += td_points / index
 
                 target_f = self.model.predict(state)
-                td_points = self.gamma * (np.amax(target_f) + td_points)
+                td_points = self.GAMMA * (np.amax(target_f) + td_points)
 
                 target_f[0][action] = target
 

@@ -5,9 +5,9 @@ import tensorflow as tf
 from keras import backend as k
 from keras.models import Model
 from keras.optimizers import Adam
-from elbotto.bots.helpers import keras_helper, jass_helper
-from elbotto.bots.netowrks.game_network import GameNetwork
-from elbotto.bots.netowrks.trumpf_network import TrumpfNetwork
+from elbotto.bots.helpers import model_helper, jass_helper
+from elbotto.bots.networks.game_network import GameNetwork
+from elbotto.bots.networks.trumpf_network import TrumpfNetwork
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ class PlayStrategy:
         self.epsilon = 0.05
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.01
-        self.batch_size = 1
+        self.batch_size = 16
         self.learning_rate = 0.001
 
         config = tf.ConfigProto()
@@ -42,9 +42,6 @@ class PlayStrategy:
                                     embeddings_layer_names=None, embeddings_metadata=None)
 
     def define_models(self):
-        self.trumpf_network.define_model()
-        self.game_network.define_model()
-
         self.combined_model = Model(inputs=[self.trumpf_network.input, self.game_network.input],
                                     outputs=[self.trumpf_network.dense_out, self.game_network.dense_out])
         adam = Adam(lr=self.learning_rate)
@@ -114,5 +111,5 @@ class PlayStrategy:
     def save_weights_and_models(self):
         log_dir = "./logs/config/"
 
-        keras_helper.save_weights_and_model(self.trumpf_network.model, self.game_counter, log_dir, "trumpf_network")
-        keras_helper.save_weights_and_model(self.game_network.model, self.game_counter, log_dir, "game_network")
+        model_helper.save_weights_and_model(self.trumpf_network.model, self.game_counter, log_dir, "trumpf_network")
+        model_helper.save_weights_and_model(self.game_network.model, self.game_counter, log_dir, "game_network")
