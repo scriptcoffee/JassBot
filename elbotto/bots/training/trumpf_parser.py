@@ -2,9 +2,9 @@ import json
 from keras import backend as k
 from elbotto.bots.training.trumpf_training import TrumpfTraining
 from elbotto.bots.training.trumpf_converter import trumpf_converter
-from elbotto.bots.training.parser import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
-from elbotto.bots.training.parser import check_path, check_file
-from elbotto.bots.training.parser import print_trumpf, print_table
+from elbotto.bots.training.parser_helper import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
+from elbotto.bots.training.parser_helper import check_path, check_file
+from elbotto.bots.training.parser_helper import print_trumpf, print_table
 
 
 def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):

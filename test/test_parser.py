@@ -1,8 +1,8 @@
 import json
 import pytest
 from elbotto.bots.training.card_parser import create_card
-from elbotto.bots.training.parser import check_path, check_file, print_trumpf, print_table
-from elbotto.bots.training.parser import get_trumpf, get_remaining_hand_cards, complete_hand_cards_with_stiches
+from elbotto.bots.training.parser_helper import check_path, check_file, print_trumpf, print_table
+from elbotto.bots.training.parser_helper import get_trumpf, get_remaining_hand_cards, complete_hand_cards_with_stiches
 
 
 @pytest.mark.parametrize("input_path, expected", [
