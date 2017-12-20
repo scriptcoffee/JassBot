@@ -1,5 +1,5 @@
-pytest
-tensorflow
-keras
-numpy
 websocket-client
+numpy==1.13.3
+tensorflow==1.4.0
+Keras==2.0.9
+h5py
