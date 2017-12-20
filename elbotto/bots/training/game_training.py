@@ -7,7 +7,7 @@ from keras.layers import Dense, BatchNormalization
 from keras.regularizers import l2
 from keras.optimizers import Adam
 from elbotto.bots.training.training import Training
-from elbotto.bots.training.card_parser import CardParser
+from elbotto.bots.training.card_parser import Card
 
 INPUT_LAYER = 186
 FIRST_LAYER = 560
@@ -84,7 +84,7 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
         card = table_cards[x]
         inputs[card.id + ((x + 1) * CARD_SET)] = 1
 
-    if len(played_cards) > 0 and isinstance(played_cards[0], CardParser):
+    if len(played_cards) > 0 and isinstance(played_cards[0], Card):
         for played_card in played_cards:
             inputs[(4 * CARD_SET) + played_card.id] = 1
     else:
@@ -104,7 +104,7 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
 
 
 def create_target(target_card):
-    if not isinstance(target_card, CardParser):
+    if not isinstance(target_card, Card):
         return None
     target_list = np.zeros((OUTPUT_LAYER,))
     target_list[target_card.id] = 1

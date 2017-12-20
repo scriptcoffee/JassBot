@@ -1,11 +1,6 @@
 from elbotto.card import Card, CARD_OFFSET
 
 
-class CardParser(Card):
-    def __init__(self, number, color):
-        super(CardParser, self).__init__(number, color)
-
-
 def is_card_invalid(card_symbol):
     return card_symbol is None or isinstance(card_symbol, int) or len(card_symbol) <= 1
 
@@ -29,7 +24,7 @@ def create_card(card_symbol):
     else:
         return None
 
-    return CardParser(number, color)
+    return Card(number, color)
 
 
 COLOR_DICT = {"H": "HEARTS",
