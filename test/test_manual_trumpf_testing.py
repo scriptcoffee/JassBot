@@ -1,5 +1,5 @@
 import pytest
-from elbotto.bots.training.manual_trumpf_testing import create_test_matrix
+from elbotto.bots.training.manual_testing import create_test_matrix
 
 
 @pytest.mark.parametrize("hand_cards, pushed_from_partner, expected_input_matrix", [
