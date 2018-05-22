@@ -3,7 +3,7 @@ from elbotto.bots.training.manual_testing import is_none, get_model, create_test
 from openpyxl import load_workbook, Workbook
 
 
-def manuel_test_list_input_predict(import_list_file, model=None):
+def manuel_test_list_input_predict(import_list_file, model=None, target_file=None):
     t_model = get_model(model)
 
     wb_input = load_workbook(import_list_file)
@@ -20,7 +20,10 @@ def manuel_test_list_input_predict(import_list_file, model=None):
 
     results = calc_prediction_matrix(prediction_matrix, t_model)
 
-    safe_as_excelfile(card_matrix, results)
+    if is_none(target_file):
+        safe_as_excelfile(card_matrix, results, target_file)
+    else:
+        safe_as_excelfile(card_matrix, results)
 
 
 def calc_prediction_matrix(prediction_matrix, t_model):
@@ -30,8 +33,9 @@ def calc_prediction_matrix(prediction_matrix, t_model):
         result_list = matrix_to_list(result)
         print(
             'The prediction is: \n'
-            ' hearts: {} \n diamonds: {} \n clubs: {} \n spades: {} \n OBEABE: {} \n UNDEUFE: {} \n SCHIEBE: {}'.format
-            (result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5], result[0][6]))
+            ' hearts: {} \n diamonds: {} \n clubs: {} \n spades: {} \n OBEABE: {} \n UNDEUFE: {} \n SCHIEBE: {}'
+                .format(result[0][0], result[0][1], result[0][2], result[0][3],
+                        result[0][4], result[0][5], result[0][6]))
         results.append(result_list)
     return results
 
@@ -76,7 +80,7 @@ def matrix_to_list(result):
     return new_list
 
 
-def safe_as_excelfile(hand_cards, results, filename="./data/trumpf_cards/result_Trumpfwahl.xlsx"):
+def safe_as_excelfile(hand_cards, results, filename="./manual_test_data/trumpf_results/results_trumpf_list.xlsx"):
     length_of_output_matrix = len(hand_cards[0]) + len(results[0])
 
     wb = Workbook()
@@ -120,7 +124,9 @@ def create_table_title(length_of_output_matrix, ws):
 #
 # Set with model that model you want to test.
 #
-# Result: the function write the results in the file './data/trumpf_cards/result_Trumpfwahl.xlsx'
+# Result: the function write the results in the file './manual_test_data/trumpf_results/results_trumpf_list.xlsx'
+# !!! Attention: The file of results would be overwrite with every new start of the main function.
+# !!!            But you can give a defined filename with path for the results with the parameter 'target_file'.
 if __name__ == '__main__':
-    manuel_test_list_input_predict(import_list_file="./data/trumpf_list.xlsx",
-                                   model="./config/trumpf_network_model_final__2018-05-09_101936.h5")
+    manuel_test_list_input_predict(import_list_file="./manual_test_data/trumpf_input/trumpf_list_template.xlsx",
+                                   model="./config/trumpf_network_model_final__2018-05-09_101936.h5", target_file=None)
