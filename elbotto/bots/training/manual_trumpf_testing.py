@@ -23,8 +23,8 @@ def manuel_test_input_predict(model=None, hand_cards=None, pushed=False, safe_in
 
 
 def safe_as_csvfile(hand_cards, result, filename="./manual_test_data/trumpf_results/result_trumpfchoice.csv"):
-    fobj_out = open(filename, "a+")
-    fobj_out.write(
+    result_file = open(filename, "a+")
+    result_file.write(
         'Karte1; Karte2; Karte3; Karte4; Karte5; Karte6; Karte7; Karte8; Karte9; '
         'Hearts; Diamonds; Clubs; Spades; Obeabe; Undeufe; Schieben; \n'
         '{}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; {}; \n'
@@ -32,7 +32,7 @@ def safe_as_csvfile(hand_cards, result, filename="./manual_test_data/trumpf_resu
                     hand_cards[6], hand_cards[7], hand_cards[8],
                     result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5], result[0][6]
                     ))
-    fobj_out.close()
+    result_file.close()
 
 
 # Set with 'model' that model you want to test.
