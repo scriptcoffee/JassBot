@@ -1,4 +1,5 @@
 import json
+import time
 from keras import backend as k
 from elbotto.bots.training.trumpf_training import TrumpfTraining
 from elbotto.bots.training.trumpf_converter import trumpf_converter
@@ -17,6 +18,7 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
         return
 
     # create an instance of the model to want to train
+    start_time = time.strftime("%d.%m.%Y %H:%M:%S")
     network = TrumpfTraining(network_name, log_path)
 
     trumpf_tuples, tss = extract_logfiles(files, network)
@@ -26,6 +28,8 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
     k.clear_session()
 
     print_statistics(trumpf_tuples, tss)
+    end_time = time.strftime("%d.%m.%Y %H:%M:%S")
+    print("The training started at {} and ends at {}.".format(start_time, end_time))
 
 
 def print_statistics(trumpf_tuples, tss):
