@@ -83,3 +83,7 @@ def print_table(table):
     else:
         # print("Table is not a list.")
         return 0
+
+
+def print_training_time(start_time, end_time):
+    print("The training started at {} and ends at {}.".format(start_time, end_time))

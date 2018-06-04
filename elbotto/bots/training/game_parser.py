@@ -1,10 +1,11 @@
 import json
+import time
 from keras import backend as k
 from elbotto.bots.training.card_parser import create_card
 from elbotto.bots.training.game_training import GameTraining
 from elbotto.bots.training.parser_helper import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
 from elbotto.bots.training.parser_helper import check_path, check_file
-from elbotto.bots.training.parser_helper import print_trumpf, print_table
+from elbotto.bots.training.parser_helper import print_trumpf, print_table, print_training_time
 
 
 def start_game_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/game'):
@@ -17,6 +18,7 @@ def start_game_training(data_path='./data/', data_file='*.txt', network_name='',
         return
 
     # create an instance of the model to want to train
+    start_time = time.strftime("%d.%m.%Y %H:%M:%S")
     network = GameTraining(network_name, log_path)
 
     samples = extract_logfiles(files, network)
@@ -24,6 +26,8 @@ def start_game_training(data_path='./data/', data_file='*.txt', network_name='',
     k.clear_session()
 
     print_statistic(samples)
+    end_time = time.strftime("%d.%m.%Y %H:%M:%S")
+    print_training_time(start_time, end_time)
 
 
 def print_statistic(samples):

@@ -5,7 +5,7 @@ from elbotto.bots.training.trumpf_training import TrumpfTraining
 from elbotto.bots.training.trumpf_converter import trumpf_converter
 from elbotto.bots.training.parser_helper import get_trumpf, complete_hand_cards_with_stiches, get_remaining_hand_cards
 from elbotto.bots.training.parser_helper import check_path, check_file
-from elbotto.bots.training.parser_helper import print_trumpf, print_table
+from elbotto.bots.training.parser_helper import print_trumpf, print_table, print_training_time
 
 
 def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):
@@ -29,7 +29,7 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
 
     print_statistics(trumpf_tuples, tss)
     end_time = time.strftime("%d.%m.%Y %H:%M:%S")
-    print("The training started at {} and ends at {}.".format(start_time, end_time))
+    print_training_time(start_time, end_time)
 
 
 def print_statistics(trumpf_tuples, tss):
