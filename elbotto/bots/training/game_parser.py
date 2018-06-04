@@ -27,7 +27,7 @@ def start_game_training(data_path='./data/', data_file='*.txt', network_name='',
 
     print_statistic(samples)
     end_time = time.strftime("%d.%m.%Y %H:%M:%S")
-    print_training_time(start_time, end_time)
+    print_training_time(start_time, end_time, network_name)
 
 
 def print_statistic(samples):

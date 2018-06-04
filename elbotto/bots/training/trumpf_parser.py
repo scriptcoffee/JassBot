@@ -29,7 +29,7 @@ def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='
 
     print_statistics(trumpf_tuples, tss)
     end_time = time.strftime("%d.%m.%Y %H:%M:%S")
-    print_training_time(start_time, end_time)
+    print_training_time(start_time, end_time, network_name)
 
 
 def print_statistics(trumpf_tuples, tss):

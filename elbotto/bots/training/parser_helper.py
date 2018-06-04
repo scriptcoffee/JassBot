@@ -85,5 +85,17 @@ def print_table(table):
         return 0
 
 
-def print_training_time(start_time, end_time):
-    print("The training started at {} and ends at {}.".format(start_time, end_time))
+def print_training_time(start_time, end_time, network_name, save_in_file=True):
+    output = "The training started at {} and ends at {}.".format(start_time, end_time)
+    print(output)
+    if save_in_file:
+        filename = './logs/TimeMeasurement_{}_{}_{}{}{}.log'\
+            .format(network_name[0:len(network_name)], start_time[0:10],
+                    start_time[11:13], start_time[14:16], start_time[17:19])
+        save_output(output, filename)
+
+
+def save_output(output, filename='Unknown'):
+    file = open(filename, 'w')
+    file.write(output)
+    file.close()
