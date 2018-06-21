@@ -8,7 +8,13 @@ from elbotto.card import Card
 def create_test_matrix(hand_cards, table_cards, played_cards, game_type):
     hand_card_list = is_none(fillup_card_list(hand_cards))
     table_card_list = is_none(fillup_card_list(table_cards))
-    played_card_list = is_none(fillup_card_list(played_cards))
+    played_card_list = []
+    if len(played_cards) == 4 and isinstance(played_cards[0], list):
+        for player_set in played_cards:
+            player_cards = is_none(fillup_card_list(player_set))
+            played_card_list.append(player_cards)
+    else:
+        played_card_list = None
     trumpf = trumpf_converter(game_type)
 
     if trumpf is None:
@@ -43,7 +49,7 @@ def manuel_test_input_predict(model=None, hand_cards=None, table_cards=None, pla
 # Fill in all cards you know:
 #   * hand_cards are all cards you actually hold in your hand  Input all cards you know your hand now.
 #   * table_cards are all cards that lie now on the table
-#   * played_cards are all cards that you know which werd play.
+#   * played_cards are all cards that you know which have been played. Separate the played cards per player.
 #  Attention: Set the game_type with one of those:
 #   'DIAMONDS', 'HEARTS', 'SPADES', 'CLUBS', 'OBEABE', 'UNDEUFE'
 if __name__ == '__main__':

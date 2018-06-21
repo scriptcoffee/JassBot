@@ -130,6 +130,7 @@ def get_active_playing_cards(stich, amount_players, learning_player):
         played_card = stich['cards'][player_seat]
         card = create_card(played_card)
 
+        # player_seat is the place of a player in the table matrix
         cards_on_table.insert(player_seat, card)
 
         current_player = (current_player - 1) % amount_players

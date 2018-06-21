@@ -18,20 +18,27 @@ def test_create_test_matrix_valid_input():
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
                              0, 1, 0, 0, 0, 0]]
 
     hand_cards = ["CA", "D6", "SJ"]
     table_cards = ["H6"]
-    played_cards = []
+    played_cards = [[], [], [], []]
     game_type = "DIAMONDS"
 
     result = create_test_matrix(hand_cards, table_cards, played_cards, game_type)
 
     assert (result == expected_input_layer).all()
 
+
 @pytest.mark.parametrize("input_hand, input_table, input_played_cards, input_game_type, expected", [
-    (["CA", "D6", "SJ"], ["H6"], [], "acorn", None),
-    (["A", "D", "J"], ["H6"], [], "HEARTS", None)
+    (["CA", "D6", "SJ"], ["H6"], [[], [], [], []], "acorn", None),
+    (["A", "D", "J"], ["H6"], [[], [], [], []], "HEARTS", None),
+    (["CA", "D6", "SJ"], ["H6"], [], "DIAMONDS", None),
+    (["CA", "D6", "SJ"], [], ["C6", "D8", "CK", "DA"], "HEARTS", None),
+    (["CA", "D6", "SJ"], [], [["C6"], ["D8"], ["CK"]], "HEARTS", None)
 ])
 def test_create_test_matrix_invalid_input(input_hand, input_table, input_played_cards, input_game_type, expected):
     result = create_test_matrix(input_hand, input_table, input_played_cards, input_game_type)
@@ -46,19 +53,22 @@ def test_create_test_matrix_empty_table():
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
-                             1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
 
                              0, 0, 0, 0, 0, 1]]
 
     hand_cards = ["HA", "H6", "CJ"]
     table_cards = []
-    played_cards = ["C6", "D8", "CK", "SA"]
+    played_cards = [["C6"], ["D8"], ["CK"], ["SA"]]
     game_type = "UNDEUFE"
 
     result = create_test_matrix(hand_cards, table_cards, played_cards, game_type)
@@ -69,6 +79,9 @@ def test_create_test_matrix_empty_table():
 def test_create_test_matrix_played_card_list_of_empty_lists():
     expected_input_layer = [[1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

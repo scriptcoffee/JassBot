@@ -9,13 +9,26 @@ from keras.optimizers import Adam
 from elbotto.bots.training.training import Training
 from elbotto.bots.training.card_parser import Card
 
-INPUT_LAYER = 186
-FIRST_LAYER = 560
-SECOND_LAYER = 1680
-THIRD_LAYER = 180
+'''
+|                               played cards
+|    hand cards   |      table       |    player 0     |    player 1      |  player 2      |  player 3      |trumpf|
+|-----------------|------------------|-----------------|------------------|----------------|----------------|------|
+
+6 * 36 + 6= 222
+'''
+
+INPUT_LAYER = 222
+FIRST_LAYER = 670
+SECOND_LAYER = 2010
+THIRD_LAYER = 220
 OUTPUT_LAYER = 36
 
 CARD_SET = 36
+
+pos_hand_cards = 0
+pos_table = 1 * CARD_SET
+pos_players_played_cards = [2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET, 5 * CARD_SET]
+pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
 
 class GameTraining(Training):
@@ -70,7 +83,6 @@ class GameTraining(Training):
 
 
 def create_input(hand_cards, table_cards, played_cards, game_type):
-    trumpf_offset = INPUT_LAYER - 6
     inputs = np.zeros((INPUT_LAYER,))
 
     if len(hand_cards) == 0:
@@ -78,28 +90,31 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
     for card in hand_cards:
         if card is None:
             return None
-        inputs[card.id] = 1
+        inputs[pos_hand_cards + card.id] = 1
 
     for x in range(len(table_cards)):
         card = table_cards[x]
-        inputs[card.id + ((x + 1) * CARD_SET)] = 1
+        inputs[pos_table + card.id] = 1
 
+    if played_cards is None:
+        return None
     if len(played_cards) > 0 and isinstance(played_cards[0], Card):
-        for played_card in played_cards:
-            inputs[(4 * CARD_SET) + played_card.id] = 1
+        print('The played card list has a wrong format!')
+        return None
     else:
         for player_of_cards in range(len(played_cards)):
             if played_cards[player_of_cards] is None:
                 break
             for played_card in played_cards[player_of_cards]:
-                inputs[(4 * CARD_SET) + played_card.id] = 1
+                inputs[pos_players_played_cards[player_of_cards] + played_card.id] = 1
 
     if game_type.mode == "TRUMPF":
-        inputs[game_type.trumpf_color.value + trumpf_offset] = 1
+        inputs[pos_trumpf + game_type.trumpf_color.value] = 1
     elif game_type.mode == "OBEABE":
-        inputs[trumpf_offset + 4] = 1
+        inputs[pos_trumpf + 4] = 1
     elif game_type.mode == "UNDEUFE":
-        inputs[trumpf_offset + 5] = 1
+        inputs[pos_trumpf + 5] = 1
+
     return np.reshape(inputs, (1, INPUT_LAYER))
 
 
