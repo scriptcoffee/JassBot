@@ -1,8 +1,10 @@
 import numpy as np
 from elbotto.bots.training.manual_testing import is_none, get_model, create_test_matrix
 from openpyxl import load_workbook, Workbook
+from openpyxl.cell.cell import Cell
 
 
+# TODO: Write some tests for the return methods
 def manuel_test_list_input_predict(import_list_file, model=None, target_file=None):
     t_model = get_model(model)
 
@@ -10,8 +12,10 @@ def manuel_test_list_input_predict(import_list_file, model=None, target_file=Non
     sheets = wb_input.sheetnames
     sheet = wb_input[sheets[0]]
     input_sheet_matrix = tuple(sheet.rows)
+    # print('INPUT SHEET MATRIX: {}',format(input_sheet_matrix))
 
     hand_cards_matrix = extract_lines_from_sheet(input_sheet_matrix)
+    # print('HAND CARDS MATRIX: {}', format(hand_cards_matrix))
 
     # print('handcards: {}'.format(hand_cards_matrix))
     card_matrix = shrink_lines_to_handcards(hand_cards_matrix)
@@ -57,6 +61,16 @@ def shrink_lines_to_handcards(hand_cards_matrix):
 
 
 def extract_lines_from_sheet(input_sheet_matrix):
+    if not isinstance(input_sheet_matrix, tuple) or \
+            not isinstance(input_sheet_matrix[0], tuple) or \
+            not isinstance(input_sheet_matrix[0][0], Cell):
+        return None
+    # print('TYPE OF LIST: {}', format(type(input_sheet_matrix)))
+    # print('TYPE OF AN OBJECT IN THE LIST: {}', format(type(input_sheet_matrix[2])))
+    # print('TYPE OF AN OBJECT of an object IN THE LIST: {}', format(type(input_sheet_matrix[0][0])))
+    # print('OBJECT OF AN OBJECT of an object IN THE LIST: {}', format(input_sheet_matrix[0][0]))
+    # print('VALUE OF AN OBJECT of an object IN THE LIST: {}', format(input_sheet_matrix[0][0].value))
+    # print('TYPE OF VALUE OF AN OBJECT of an object IN THE LIST: {}', format(type(input_sheet_matrix[0][0].value)))
     hand_cards_matrix = []
     for row_number in range(1, len(input_sheet_matrix)):
         row = input_sheet_matrix[row_number]

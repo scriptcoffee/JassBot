@@ -8,7 +8,7 @@ from elbotto.bots.training.parser_helper import check_path, check_file
 from elbotto.bots.training.parser_helper import print_trumpf, print_table, print_training_time
 
 
-def start_trumpf_training(data_path='./data/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):
+def start_trumpf_training(data_path='./data/BA_Logfiles/', data_file='*.txt', network_name='', log_path='./logs/trumpf'):
     if check_path(data_path) is None:
         return
     files = check_file(data_path, data_file)
