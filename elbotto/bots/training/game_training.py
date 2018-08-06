@@ -14,12 +14,12 @@ from elbotto.bots.training.card_parser import Card
 |    hand cards   |      table       |    player 0     |    player 1      |  player 2      |  player 3      |trumpf|
 |-----------------|------------------|-----------------|------------------|----------------|----------------|------|
 
-6 * 36 + 6= 222
+6 * 36 + 6 = 222
 
 Split the network in three learning parts - Three networks.
-1. network for the first three cards (1.-3. cards)
-2. network for the second three cards (4.-6. cards)
-3. network for the last three cards (7.-9. cards)
+1. network for the first three cards (1.-3. cards) -> first_game_network
+2. network for the second three cards (4.-6. cards) -> second_game_network
+3. network for the last three cards (7.-9. cards) -> third_game_network
 '''
 
 INPUT_LAYER = 222
