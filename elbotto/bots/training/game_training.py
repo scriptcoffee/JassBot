@@ -15,6 +15,11 @@ from elbotto.bots.training.card_parser import Card
 |-----------------|------------------|-----------------|------------------|----------------|----------------|------|
 
 6 * 36 + 6= 222
+
+Split the network in three learning parts - Three networks.
+1. network for the first three cards (1.-3. cards)
+2. network for the second three cards (4.-6. cards)
+3. network for the last three cards (7.-9. cards)
 '''
 
 INPUT_LAYER = 222
