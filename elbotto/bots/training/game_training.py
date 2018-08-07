@@ -37,20 +37,26 @@ pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
 
 class GameTraining(Training):
-    def __init__(self, name, log_path):
-        super().__init__(name)
-        self.game_counter = 0
+    def __init__(self, main_network_name, log_path):
+        self.network_list = ['first_network', 'second_network', 'third_network']
+        for name in self.network_list:
+            network_name = '{}_{}'.format(main_network_name, name)
+            super().__init__(network_name)
+            self.game_counter = 0
 
-        config = tf.ConfigProto()
-        config.gpu_options.allow_growth = True
-        sess = tf.Session(config=config)
-        k.set_session(sess)
+            config = tf.ConfigProto()
+            config.gpu_options.allow_growth = True
+            sess = tf.Session(config=config)
+            k.set_session(sess)
 
-        self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=64,
-                                                       write_graph=False, write_grads=True, write_images=False,
-                                                       embeddings_freq=0, embeddings_layer_names=None,
-                                                       embeddings_metadata=None)
-        self.save_model_and_weights("game", "init")
+            self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=64,
+                                                           write_graph=False, write_grads=True, write_images=False,
+                                                           embeddings_freq=0, embeddings_layer_names=None,
+                                                           embeddings_metadata=None)
+
+            filename = 'game_{}'.format(name)
+            self.save_model_and_weights(filename, "init")
+            self.save_model_and_weights(filename, file_addition_allowed=False)
 
     def define_model(self):
         self.q_model = Sequential()
@@ -66,24 +72,55 @@ class GameTraining(Training):
                              metrics=['categorical_accuracy', 'categorical_crossentropy', 'mean_squared_error', 'acc'])
 
     def train_the_model(self, hand_list, table_list, played_card_list, trumpf_list, target_list):
-        x = np.zeros((np.array(hand_list).shape[0], INPUT_LAYER))
-        y = np.zeros((np.array(target_list).shape[0], OUTPUT_LAYER))
-        input_list = []
-        target_layer = []
-        for i in range(len(hand_list)):
-            input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
-            target_layer.append(create_target(target_list[i]))
+        first_input_list = []
+        first_target_layer = []
+        second_input_list = []
+        second_target_layer = []
+        third_input_list = []
+        third_target_layer = []
 
-        x[:, :] = input_list
-        y[:, :] = target_layer
-        print("Input-Layer: {}".format(x))
-        print("Output-Layer: {}".format(y))
-        if len(y) > 1:
-            if self.game_counter % 500 == 0:
-                self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])
+        for i in range(len(hand_list)):
+            # Split into three list (first, second, third)
+            # print('HAND LIST: {}'.format(hand_list[i]))
+            # print('HAND LIST Counter: {}'.format(len(hand_list[i])))
+            amount_hand_cards = len(hand_list[i])
+            if amount_hand_cards > 6:
+                first_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
+                first_target_layer.append(create_target(target_list[i]))
+            elif amount_hand_cards < 4:
+                third_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
+                third_target_layer.append(create_target(target_list[i]))
             else:
-                self.q_model.fit(x, y, validation_split=0.1, epochs=10, verbose=1)
-        self.game_counter += 1
+                second_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
+                second_target_layer.append(create_target(target_list[i]))
+
+        first_x = np.zeros((np.array(first_input_list).shape[0], INPUT_LAYER))
+        first_y = np.zeros((np.array(first_target_layer).shape[0], OUTPUT_LAYER))
+        second_x = np.zeros((np.array(second_input_list).shape[0], INPUT_LAYER))
+        second_y = np.zeros((np.array(second_target_layer).shape[0], OUTPUT_LAYER))
+        third_x = np.zeros((np.array(third_input_list).shape[0], INPUT_LAYER))
+        third_y = np.zeros((np.array(third_target_layer).shape[0], OUTPUT_LAYER))
+
+        first_x[:, :] = first_input_list
+        first_y[:, :] = first_target_layer
+        second_x[:, :] = second_input_list
+        second_y[:, :] = second_target_layer
+        third_x[:, :] = third_input_list
+        third_y[:, :] = third_target_layer
+
+        np_xy_lists = [(first_x, first_y, self.network_list[0]), (second_x, second_y, self.network_list[1]), (third_x, third_y, self.network_list[2])]
+
+        for t in np_xy_lists:
+            filename = 'game_{}'.format(t[2])
+            self.q_model = keras.models.load_model("./config/{}_network_model.h5".format(filename))
+            if len(t[1]) > 1:
+                if self.game_counter % 500 == 0:
+                    self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])
+                else:
+                    self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1)
+            self.game_counter += 1
+            self.save_model_and_weights(filename, file_addition_allowed=False)
+
         print("One Training-Part are finished!")
 
 
