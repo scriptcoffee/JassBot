@@ -16,10 +16,10 @@ from elbotto.bots.training.card_parser import Card
 
 6 * 36 + 6 = 222
 
-Split the network in three learning parts - Three networks.
-1. network for the first three cards (1.-3. cards) -> first_game_network
-2. network for the second three cards (4.-6. cards) -> second_game_network
-3. network for the last three cards (7.-9. cards) -> third_game_network
+Split the game network in three learning parts - Three networks.
+1. network for the first three cards (1.-3. cards) -> first_network
+2. network for the second three cards (4.-6. cards) -> second_network
+3. network for the last three cards (7.-9. cards) -> third_network
 '''
 
 INPUT_LAYER = 222
@@ -35,13 +35,14 @@ pos_table = 1 * CARD_SET
 pos_players_played_cards = [2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET, 5 * CARD_SET]
 pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
+model_path = "./config/"
+
 
 class GameTraining(Training):
     def __init__(self, main_network_name, log_path):
         self.network_list = ['first_network', 'second_network', 'third_network']
         for name in self.network_list:
-            network_name = '{}_{}'.format(main_network_name, name)
-            super().__init__(network_name)
+            super().__init__('{}_{}'.format(main_network_name, name))
             self.game_counter = 0
 
             config = tf.ConfigProto()
@@ -56,11 +57,12 @@ class GameTraining(Training):
 
             filename = 'game_{}'.format(name)
             self.save_model_and_weights(filename, "init")
-            self.save_model_and_weights(filename, file_addition_allowed=False)
+            self.save_model("{}{}_model.h5".format(model_path, filename), network_name=name)
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
+        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,),
+                               kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
@@ -81,8 +83,6 @@ class GameTraining(Training):
 
         for i in range(len(hand_list)):
             # Split into three list (first, second, third)
-            # print('HAND LIST: {}'.format(hand_list[i]))
-            # print('HAND LIST Counter: {}'.format(len(hand_list[i])))
             amount_hand_cards = len(hand_list[i])
             if amount_hand_cards > 6:
                 first_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
@@ -108,18 +108,21 @@ class GameTraining(Training):
         third_x[:, :] = third_input_list
         third_y[:, :] = third_target_layer
 
-        np_xy_lists = [(first_x, first_y, self.network_list[0]), (second_x, second_y, self.network_list[1]), (third_x, third_y, self.network_list[2])]
+        np_xy_lists = [(first_x, first_y, self.network_list[0]), (second_x, second_y, self.network_list[1]),
+                       (third_x, third_y, self.network_list[2])]
 
         for t in np_xy_lists:
-            filename = 'game_{}'.format(t[2])
-            self.q_model = keras.models.load_model("./config/{}_network_model.h5".format(filename))
+            filepath = "{}game_{}_model.h5".format(model_path, t[2])
+
+            self.load_model(filepath, t[2])
             if len(t[1]) > 1:
                 if self.game_counter % 500 == 0:
-                    self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])
+                    self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1,
+                                     callbacks=[self.tb_callback])
                 else:
                     self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1)
             self.game_counter += 1
-            self.save_model_and_weights(filename, file_addition_allowed=False)
+            self.save_model(filepath, network_name=t[2])
 
         print("One Training-Part are finished!")
 

@@ -1,3 +1,4 @@
+import keras
 from abc import abstractmethod
 from datetime import datetime
 from json import dump
@@ -17,7 +18,9 @@ class Training:
         self.q_model.save_weights(path)
         return print("The weights of your model saved.")
 
-    def save_model(self, path, json=False):
+    def save_model(self, path, json=False, network_name=''):
+        if network_name is not '':
+            network_name = " {}".format(network_name)
         if json:
             model_json = self.q_model.to_json()
             with open(path, 'w') as f:
@@ -26,7 +29,7 @@ class Training:
         else:
             self.q_model.save(path)
             save_type = 'h5'
-        return print("The model saved as {}.".format(save_type))
+        return print("The model{} saved as {}.".format(network_name, save_type))
 
     def save_model_and_weights(self, network_name="", file_description="", file_addition_allowed=True):
         if file_description is not "":
@@ -36,5 +39,9 @@ class Training:
         else:
             file_addition = file_description
         self.save_model("./config/{}_network_model{}.h5".format(network_name, file_addition))
-        self.save_model("./config/{}_network_model{}.json".format(network_name, file_addition), True)
+        self.save_model("./config/{}_network_model{}.json".format(network_name, file_addition), json=True)
         self.save_weights("./config/{}_network_weights{}.h5".format(network_name, file_addition))
+
+    def load_model(self, path, networkname):
+        self.q_model = keras.models.load_model(path)
+        return print("Load the model from {}.".format(networkname))

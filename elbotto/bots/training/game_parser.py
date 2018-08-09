@@ -45,7 +45,8 @@ def extract_logfiles(files, network):
 
             samples = work_trought_each_line(lines, network, samples)
 
-        network.save_model_and_weights("game", file_number)
+        for network_name in network.network_list:
+            network.save_model_and_weights("game_{}".format(network_name), file_number)
 
         file_number += 1
     return samples
