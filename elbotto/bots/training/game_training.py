@@ -20,6 +20,15 @@ Split the game network in three learning parts - Three networks.
 1. network for the first three cards (1.-3. cards) -> first_network
 2. network for the second three cards (4.-6. cards) -> second_network
 3. network for the last three cards (7.-9. cards) -> third_network
+
+|   first_network   |   second_network  |   third_network   |
+|--------...--------|--------...--------|--------...--------|
+
+3 * 222 = 666
+
+Every network has the same input and the same output layer, but the three game networks are independent of each other.
+
+The output layer of each network has 36 neurons or 36 possible cards.
 '''
 
 INPUT_LAYER = 222
