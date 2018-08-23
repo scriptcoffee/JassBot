@@ -1,9 +1,9 @@
+import os
 import keras
 import numpy as np
 import tensorflow as tf
 from keras import backend as k
-from keras.models import Sequential
-from keras.layers import Dense, BatchNormalization
+from keras.layers import Input, Dense
 from keras.regularizers import l2
 from keras.optimizers import Adam
 from elbotto.bots.training.training import Training
@@ -44,111 +44,123 @@ pos_table = 1 * CARD_SET
 pos_players_played_cards = [2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET, 5 * CARD_SET]
 pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
-model_path = "./config/"
+MODEL_INPUT_LAYER = 3 * INPUT_LAYER
+MODEL_OUTPUT_LAYER = 3* OUTPUT_LAYER
+pos_input_networks = [0 * INPUT_LAYER, 1 * INPUT_LAYER, 2 * INPUT_LAYER]
+pos_output_networks = [0 * OUTPUT_LAYER, 1 * OUTPUT_LAYER, 2 * OUTPUT_LAYER]
+
+dir_path = os.path.dirname(os.path.abspath(__file__))
+model_path = dir_path.join('config')
 
 
 class GameTraining(Training):
     def __init__(self, main_network_name, log_path):
-        self.network_list = ['first_network', 'second_network', 'third_network']
-        for name in self.network_list:
-            super().__init__('{}_{}'.format(main_network_name, name))
-            self.game_counter = 0
+        self.network_names = ['first_network', 'second_network', 'third_network']
 
-            config = tf.ConfigProto()
-            config.gpu_options.allow_growth = True
-            sess = tf.Session(config=config)
-            k.set_session(sess)
+        super().__init__(main_network_name)
+        self.dict_networks = {}
+        self.game_counter = 0
 
-            self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=64,
-                                                           write_graph=False, write_grads=True, write_images=False,
-                                                           embeddings_freq=0, embeddings_layer_names=None,
-                                                           embeddings_metadata=None)
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        k.set_session(sess)
 
-            filename = 'game_{}'.format(name)
-            self.save_model_and_weights(filename, "init")
-            self.save_model("{}{}_model.h5".format(model_path, filename), network_name=name)
+        self.tb_callback = keras.callbacks.TensorBoard(log_dir=log_path, histogram_freq=5, batch_size=64,
+                                                       write_graph=False, write_grads=True, write_images=False,
+                                                       embeddings_freq=0, embeddings_layer_names=None,
+                                                       embeddings_metadata=None)
+
+        self.save_model_and_weights(main_network_name, "init")
 
     def define_model(self):
-        self.q_model = Sequential()
-        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,),
-                               kernel_initializer='uniform'))
-        self.q_model.add(BatchNormalization())
-        self.q_model.add(Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform'))
-        self.q_model.add(BatchNormalization())
-        self.q_model.add(Dense(THIRD_LAYER, activation='relu', kernel_initializer='uniform'))
-        self.q_model.add(BatchNormalization())
-        self.q_model.add(Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01)))
+        for i, network_name in enumerate(self.network_names):
+            print('out from network_list: ', network_name)
+            start_layer = Input(shape=(INPUT_LAYER,))
+            self.dict_networks['{}_input_layer'.format(network_name)] = start_layer
+            first_layer = Dense(FIRST_LAYER, activation='relu', kernel_initializer='uniform')(start_layer)
+            self.dict_networks['{}_first_layer'.format(network_name)] = first_layer
+            second_layer = Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform')(first_layer)
+            self.dict_networks['{}_second_layer'.format(network_name)] = second_layer
+            third_layer = Dense(THIRD_LAYER, activation='relu', kernel_initializer='uniform')(second_layer)
+            self.dict_networks['{}_third_layer'.format(network_name)] = third_layer
+            last_layer = Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01))(third_layer)
+            self.dict_networks['{}_output_layer'.format(network_name)] = last_layer
+
+        self.q_model = keras.models.Model(
+            inputs=[self.dict_networks.get('first_network_input_layer'),
+                    self.dict_networks.get('second_network_input_layer'),
+                    self.dict_networks.get('third_network_input_layer')],
+            outputs=[self.dict_networks.get('first_network_output_layer'),
+                     self.dict_networks.get('second_network_output_layer'),
+                     self.dict_networks.get('third_network_output_layer')])
+
         adam = Adam(lr=0.005)
         self.q_model.compile(loss='categorical_crossentropy', optimizer=adam,
                              metrics=['categorical_accuracy', 'categorical_crossentropy', 'mean_squared_error', 'acc'])
 
+        print('model', self.q_model.summary())
+
     def train_the_model(self, hand_list, table_list, played_card_list, trumpf_list, target_list):
-        first_input_list = []
-        first_target_layer = []
-        second_input_list = []
-        second_target_layer = []
-        third_input_list = []
-        third_target_layer = []
+
+        input_list = []
+        target_layer = []
 
         for i in range(len(hand_list)):
-            # Split into three list (first, second, third)
+            # Split the list for the three trainable networks (first, second, third)
             amount_hand_cards = len(hand_list[i])
             if amount_hand_cards > 6:
-                first_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
-                first_target_layer.append(create_target(target_list[i]))
+                input_list.append(
+                    create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_networks[2]))
+                target_layer.append(create_target(target_list[i], pos_output_networks[2]))
             elif amount_hand_cards < 4:
-                third_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
-                third_target_layer.append(create_target(target_list[i]))
+                input_list.append(
+                    create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_networks[0]))
+                target_layer.append(create_target(target_list[i], pos_output_networks[0]))
             else:
-                second_input_list.append(create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i]))
-                second_target_layer.append(create_target(target_list[i]))
+                input_list.append(
+                    create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_networks[1]))
+                target_layer.append(create_target(target_list[i], pos_output_networks[1]))
 
-        first_x = np.zeros((np.array(first_input_list).shape[0], INPUT_LAYER))
-        first_y = np.zeros((np.array(first_target_layer).shape[0], OUTPUT_LAYER))
-        second_x = np.zeros((np.array(second_input_list).shape[0], INPUT_LAYER))
-        second_y = np.zeros((np.array(second_target_layer).shape[0], OUTPUT_LAYER))
-        third_x = np.zeros((np.array(third_input_list).shape[0], INPUT_LAYER))
-        third_y = np.zeros((np.array(third_target_layer).shape[0], OUTPUT_LAYER))
+        x = np.zeros((np.array(input_list).shape[0], MODEL_INPUT_LAYER))
+        y = np.zeros((np.array(target_layer).shape[0], MODEL_OUTPUT_LAYER))
 
-        first_x[:, :] = first_input_list
-        first_y[:, :] = first_target_layer
-        second_x[:, :] = second_input_list
-        second_y[:, :] = second_target_layer
-        third_x[:, :] = third_input_list
-        third_y[:, :] = third_target_layer
+        print('x:', x.shape)
+        print('y:', y.shape)
 
-        np_xy_lists = [(first_x, first_y, self.network_list[0]), (second_x, second_y, self.network_list[1]),
-                       (third_x, third_y, self.network_list[2])]
+        x[:, :] = input_list
+        y[:, :] = target_layer
 
-        for t in np_xy_lists:
-            filepath = "{}game_{}_model.h5".format(model_path, t[2])
+        x = x.reshape((3, len(x), 222))
+        y = y.reshape((3, len(y), 36))
 
-            self.load_model(filepath, t[2])
-            if len(t[1]) > 1:
-                if self.game_counter % 500 == 0:
-                    self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1,
-                                     callbacks=[self.tb_callback])
-                else:
-                    self.q_model.fit(t[0], t[1], validation_split=0.1, epochs=10, verbose=1)
-            self.game_counter += 1
-            self.save_model(filepath, network_name=t[2])
+        if self.game_counter % 500 == 0:
+            self.q_model.fit({'input_1': x[0], 'input_2': x[1], 'input_3': x[2]},
+                             {'dense_4': y[0], 'dense_8': y[1], 'dense_12': y[2]},
+                             validation_split=0.1, epochs=10, verbose=1, callbacks=[self.tb_callback])
+        else:
+            self.q_model.fit({'input_1': x[0], 'input_2': x[1], 'input_3': x[2]},
+                             {'dense_4': y[0], 'dense_8': y[1], 'dense_12': y[2]},
+                             validation_split=0.1, epochs=10, verbose=1)
+
+        self.game_counter += 1
 
         print("One Training-Part are finished!")
 
 
-def create_input(hand_cards, table_cards, played_cards, game_type):
-    inputs = np.zeros((INPUT_LAYER,))
+def create_input(hand_cards, table_cards, played_cards, game_type, pos_network):
+    inputs = np.zeros((MODEL_INPUT_LAYER,))
 
     if len(hand_cards) == 0:
         return None
     for card in hand_cards:
         if card is None:
             return None
-        inputs[pos_hand_cards + card.id] = 1
+        inputs[pos_network + pos_hand_cards + card.id] = 1
 
     for x in range(len(table_cards)):
         card = table_cards[x]
-        inputs[pos_table + card.id] = 1
+        inputs[pos_network + pos_table + card.id] = 1
 
     if played_cards is None:
         return None
@@ -160,21 +172,21 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
             if played_cards[player_of_cards] is None:
                 break
             for played_card in played_cards[player_of_cards]:
-                inputs[pos_players_played_cards[player_of_cards] + played_card.id] = 1
+                inputs[pos_network + pos_players_played_cards[player_of_cards] + played_card.id] = 1
 
     if game_type.mode == "TRUMPF":
-        inputs[pos_trumpf + game_type.trumpf_color.value] = 1
+        inputs[pos_network + pos_trumpf + game_type.trumpf_color.value] = 1
     elif game_type.mode == "OBEABE":
-        inputs[pos_trumpf + 4] = 1
+        inputs[pos_network + pos_trumpf + 4] = 1
     elif game_type.mode == "UNDEUFE":
-        inputs[pos_trumpf + 5] = 1
+        inputs[pos_network + pos_trumpf + 5] = 1
 
-    return np.reshape(inputs, (1, INPUT_LAYER))
+    return np.reshape(inputs, (1, MODEL_INPUT_LAYER))
 
 
-def create_target(target_card):
+def create_target(target_card, pos_network):
     if not isinstance(target_card, Card):
         return None
-    target_list = np.zeros((OUTPUT_LAYER,))
-    target_list[target_card.id] = 1
-    return np.reshape(target_list, (1, OUTPUT_LAYER))
+    target_list = np.zeros((MODEL_OUTPUT_LAYER,))
+    target_list[pos_network + target_card.id] = 1
+    return np.reshape(target_list, (1, MODEL_OUTPUT_LAYER))
