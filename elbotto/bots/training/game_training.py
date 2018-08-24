@@ -45,7 +45,7 @@ pos_players_played_cards = [2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET, 5 * CARD_S
 pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
 MODEL_INPUT_LAYER = 3 * INPUT_LAYER
-MODEL_OUTPUT_LAYER = 3* OUTPUT_LAYER
+MODEL_OUTPUT_LAYER = 3 * OUTPUT_LAYER
 pos_input_networks = [0 * INPUT_LAYER, 1 * INPUT_LAYER, 2 * INPUT_LAYER]
 pos_output_networks = [0 * OUTPUT_LAYER, 1 * OUTPUT_LAYER, 2 * OUTPUT_LAYER]
 
@@ -56,9 +56,8 @@ model_path = dir_path.join('config')
 class GameTraining(Training):
     def __init__(self, main_network_name, log_path):
         self.network_names = ['first_network', 'second_network', 'third_network']
-
-        super().__init__(main_network_name)
         self.dict_networks = {}
+        super().__init__(main_network_name)
         self.game_counter = 0
 
         config = tf.ConfigProto()
@@ -108,19 +107,10 @@ class GameTraining(Training):
 
         for i in range(len(hand_list)):
             # Split the list for the three trainable networks (first, second, third)
-            amount_hand_cards = len(hand_list[i])
-            if amount_hand_cards > 6:
-                input_list.append(
-                    create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_networks[2]))
-                target_layer.append(create_target(target_list[i], pos_output_networks[2]))
-            elif amount_hand_cards < 4:
-                input_list.append(
-                    create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_networks[0]))
-                target_layer.append(create_target(target_list[i], pos_output_networks[0]))
-            else:
-                input_list.append(
-                    create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_networks[1]))
-                target_layer.append(create_target(target_list[i], pos_output_networks[1]))
+            pos_input_network, pos_output_network = choose_network(len(hand_list[i]))
+            input_list.append(
+                create_input(hand_list[i], table_list[i], played_card_list[i], trumpf_list[i], pos_input_network))
+            target_layer.append(create_target(target_list[i], pos_output_network))
 
         x = np.zeros((np.array(input_list).shape[0], MODEL_INPUT_LAYER))
         y = np.zeros((np.array(target_layer).shape[0], MODEL_OUTPUT_LAYER))
@@ -148,11 +138,19 @@ class GameTraining(Training):
         print("One Training-Part are finished!")
 
 
-def create_input(hand_cards, table_cards, played_cards, game_type, pos_network):
+def create_input(hand_cards, table_cards, played_cards, game_type, pos_network=None):
     inputs = np.zeros((MODEL_INPUT_LAYER,))
 
-    if len(hand_cards) == 0:
+    amount_hand_cards = len(hand_cards)
+
+    if amount_hand_cards == 0:
         return None
+
+    if pos_network is None:
+        pos_network, _ = choose_network(amount_hand_cards)
+        if pos_network is None:
+            return None
+
     for card in hand_cards:
         if card is None:
             return None
@@ -190,3 +188,16 @@ def create_target(target_card, pos_network):
     target_list = np.zeros((MODEL_OUTPUT_LAYER,))
     target_list[pos_network + target_card.id] = 1
     return np.reshape(target_list, (1, MODEL_OUTPUT_LAYER))
+
+
+def choose_network(amount_hand_cards):
+    if not isinstance(amount_hand_cards, int):
+        return None, None
+    if 10 > amount_hand_cards > 6:
+        return pos_input_networks[0], pos_output_networks[0]
+    elif 0 < amount_hand_cards < 4:
+        return pos_input_networks[2], pos_output_networks[2]
+    elif 3 < amount_hand_cards < 7:
+        return pos_input_networks[1], pos_output_networks[1]
+    else:
+        return None, None
