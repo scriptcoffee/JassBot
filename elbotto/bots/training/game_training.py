@@ -10,11 +10,26 @@ from elbotto.bots.training.training import Training
 from elbotto.bots.training.card_parser import Card
 
 '''
-|                               played cards
-|    hand cards   |      table       |    player 0     |    player 1      |  player 2      |  player 3      |trumpf|
-|-----------------|------------------|-----------------|------------------|----------------|----------------|------|
+|  36 hand cards  |   table cards (36 cards per player)   |   history (36 cards per stich per player)    | trumpf |
+|-----------------|---------------------------------------|----------------------------------------------|--------|
 
-6 * 36 + 6= 222
+
+|          36 table cards per each player           |
+|---------------------------------------------------|
+|| player 1  |  player 2  |  player 3  |  player 4 ||
+|------------|------------|------------|------------|
+-->> This is the current stich, because that are the most important cards for the current desicion
+-->> That is the reason too, why we make the history just to 8 stichs 
+
+
+|        36 cards per stich per player (history of the stichs from the current game without the last stich)      | 
+|---------------------------------------------------------------------------------------------------------------------|
+|           stich 1         ||           stich 2         ||           stich 3         |...|           stich 8         |
+|---------------------------||---------------------------||---------------------------|...|---------------------------|
+|   p1 |   p2 |   p3 |   p4 ||   p1 |   p2 |   p3 |   p4 ||   p1 |   p2 |   p3 |   p4 |...|   p1 |   p2 |   p3 |   p4 |
+
+
+36 + 4 * 36 + 8 * 4 * 36 + 6= 1'338
 '''
 
 INPUT_LAYER = 222
