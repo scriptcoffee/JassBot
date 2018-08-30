@@ -22,27 +22,46 @@ from elbotto.bots.training.card_parser import Card
 -->> That is the reason too, why we make the history just to 8 stichs 
 
 
-|        36 cards per stich per player (history of the stichs from the current game without the last stich)      | 
+|          36 cards per stich per player (history of the stichs from the current game without the last stich)         | 
 |---------------------------------------------------------------------------------------------------------------------|
 |           stich 1         ||           stich 2         ||           stich 3         |...|           stich 8         |
 |---------------------------||---------------------------||---------------------------|...|---------------------------|
 |   p1 |   p2 |   p3 |   p4 ||   p1 |   p2 |   p3 |   p4 ||   p1 |   p2 |   p3 |   p4 |...|   p1 |   p2 |   p3 |   p4 |
 
 
-36 + 4 * 36 + 8 * 4 * 36 + 6= 1'338
+36 + 4 * 36 + 8 * 4 * 36 + 6 = 1'338
 '''
 
-INPUT_LAYER = 222
-FIRST_LAYER = 670
-SECOND_LAYER = 2010
-THIRD_LAYER = 220
+INPUT_LAYER = 1338
+FIRST_LAYER = 4000
+SECOND_LAYER = 12000
+THIRD_LAYER = 36000
+FOURTH_LAYER = 4000
+FIFTH_LAYER = 440
 OUTPUT_LAYER = 36
 
 CARD_SET = 36
 
 pos_hand_cards = 0
-pos_table = 1 * CARD_SET
-pos_players_played_cards = [2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET, 5 * CARD_SET]
+pos_player_on_table = [1 * CARD_SET, 2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET]
+# pos_table = 1 * CARD_SET
+
+
+def generate_player_per_stich(start_range, end_range):
+    player_collector = []
+    pos_players_per_stich = []
+
+    for player in range(start_range, end_range):
+        player_collector.append(player * CARD_SET)
+        if len(player_collector) == 4 or player == end_range:
+            pos_players_per_stich.append(player_collector)
+            player_collector = []
+
+    return pos_players_per_stich
+
+
+pos_players_per_stich = generate_player_per_stich(5,37)
+
 pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
 
@@ -69,6 +88,10 @@ class GameTraining(Training):
         self.q_model.add(Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(THIRD_LAYER, activation='relu', kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(FOURTH_LAYER, activation='relu', kernel_initializer='uniform'))
+        self.q_model.add(BatchNormalization())
+        self.q_model.add(Dense(FIFTH_LAYER, activation='relu', kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(OUTPUT_LAYER, activation='softmax', kernel_regularizer=l2(0.01)))
         adam = Adam(lr=0.005)
@@ -109,7 +132,7 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
 
     for x in range(len(table_cards)):
         card = table_cards[x]
-        inputs[pos_table + card.id] = 1
+        inputs[pos_player_on_table[x] + card.id] = 1
 
     if played_cards is None:
         return None
@@ -120,8 +143,10 @@ def create_input(hand_cards, table_cards, played_cards, game_type):
         for player_of_cards in range(len(played_cards)):
             if played_cards[player_of_cards] is None:
                 break
+            stich = 0
             for played_card in played_cards[player_of_cards]:
-                inputs[pos_players_played_cards[player_of_cards] + played_card.id] = 1
+                inputs[pos_players_per_stich[stich][player_of_cards] + played_card.id] = 1
+                stich += 1
 
     if game_type.mode == "TRUMPF":
         inputs[pos_trumpf + game_type.trumpf_color.value] = 1
@@ -139,3 +164,5 @@ def create_target(target_card):
     target_list = np.zeros((OUTPUT_LAYER,))
     target_list[target_card.id] = 1
     return np.reshape(target_list, (1, OUTPUT_LAYER))
+
+
