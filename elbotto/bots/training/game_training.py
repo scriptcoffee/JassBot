@@ -44,23 +44,25 @@ CARD_SET = 36
 
 pos_hand_cards = 0
 pos_player_on_table = [1 * CARD_SET, 2 * CARD_SET, 3 * CARD_SET, 4 * CARD_SET]
-# pos_table = 1 * CARD_SET
+
+amount_players = 4
+amount_card_sets = 37
 
 
 def generate_player_per_stich(start_range, end_range):
     player_collector = []
-    pos_players_per_stich = []
+    pos_players_in_stich = []
 
     for player in range(start_range, end_range):
         player_collector.append(player * CARD_SET)
         if len(player_collector) == 4 or player == end_range:
-            pos_players_per_stich.append(player_collector)
+            pos_players_in_stich.append(player_collector)
             player_collector = []
 
-    return pos_players_per_stich
+    return pos_players_in_stich
 
 
-pos_players_per_stich = generate_player_per_stich(5,37)
+pos_players_per_stich = generate_player_per_stich(amount_players + 1, amount_card_sets)
 
 pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
 
@@ -83,7 +85,8 @@ class GameTraining(Training):
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
+        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,),
+                               kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
@@ -164,5 +167,3 @@ def create_target(target_card):
     target_list = np.zeros((OUTPUT_LAYER,))
     target_list[target_card.id] = 1
     return np.reshape(target_list, (1, OUTPUT_LAYER))
-
-
