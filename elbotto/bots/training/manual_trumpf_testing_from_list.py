@@ -12,12 +12,9 @@ def manuel_test_list_input_predict(import_list_file, model=None, target_file=Non
     sheets = wb_input.sheetnames
     sheet = wb_input[sheets[0]]
     input_sheet_matrix = tuple(sheet.rows)
-    # print('INPUT SHEET MATRIX: {}',format(input_sheet_matrix))
 
     hand_cards_matrix = extract_lines_from_sheet(input_sheet_matrix)
-    # print('HAND CARDS MATRIX: {}', format(hand_cards_matrix))
 
-    # print('handcards: {}'.format(hand_cards_matrix))
     card_matrix = shrink_lines_to_handcards(hand_cards_matrix)
 
     prediction_matrix = prepared_prediction_matrix(card_matrix)
@@ -46,15 +43,24 @@ def calc_prediction_matrix(prediction_matrix, t_model):
 
 def prepared_prediction_matrix(card_matrix):
     prediction_matrix = []
+    if not isinstance(card_matrix, list):
+        return prediction_matrix
     for cards_in_matrix in card_matrix:
-        input_matrix = create_test_matrix(cards_in_matrix[0:9], cards_in_matrix[9])
-        prediction_matrix.append(input_matrix)
+        if not cards_in_matrix:
+            break
+        if is_none(cards_in_matrix):
+            input_matrix = create_test_matrix(cards_in_matrix[0:9], cards_in_matrix[9])
+            prediction_matrix.append(input_matrix)
     return prediction_matrix
 
 
 def shrink_lines_to_handcards(hand_cards_matrix):
     card_matrix = []
+    if not isinstance(hand_cards_matrix, list):
+        return card_matrix
     for start_cards in hand_cards_matrix:
+        if not start_cards:
+            break
         if is_none(start_cards[0]):
             card_matrix.append(start_cards)
     return card_matrix
@@ -65,12 +71,6 @@ def extract_lines_from_sheet(input_sheet_matrix):
             not isinstance(input_sheet_matrix[0], tuple) or \
             not isinstance(input_sheet_matrix[0][0], Cell):
         return None
-    # print('TYPE OF LIST: {}', format(type(input_sheet_matrix)))
-    # print('TYPE OF AN OBJECT IN THE LIST: {}', format(type(input_sheet_matrix[2])))
-    # print('TYPE OF AN OBJECT of an object IN THE LIST: {}', format(type(input_sheet_matrix[0][0])))
-    # print('OBJECT OF AN OBJECT of an object IN THE LIST: {}', format(input_sheet_matrix[0][0]))
-    # print('VALUE OF AN OBJECT of an object IN THE LIST: {}', format(input_sheet_matrix[0][0].value))
-    # print('TYPE OF VALUE OF AN OBJECT of an object IN THE LIST: {}', format(type(input_sheet_matrix[0][0].value)))
     hand_cards_matrix = []
     for row_number in range(1, len(input_sheet_matrix)):
         row = input_sheet_matrix[row_number]

@@ -49,7 +49,8 @@ class GameTraining(Training):
 
     def define_model(self):
         self.q_model = Sequential()
-        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,), kernel_initializer='uniform'))
+        self.q_model.add(Dense(FIRST_LAYER, activation='relu', input_shape=(INPUT_LAYER,),
+                               kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
         self.q_model.add(Dense(SECOND_LAYER, activation='relu', kernel_initializer='uniform'))
         self.q_model.add(BatchNormalization())
