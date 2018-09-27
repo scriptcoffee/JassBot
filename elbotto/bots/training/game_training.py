@@ -64,7 +64,7 @@ def generate_player_per_stich(start_range, end_range):
 
 pos_players_per_stich = generate_player_per_stich(amount_players + 1, amount_card_sets)
 
-pos_trumpf = INPUT_LAYER - 6  # Alternativ calculation: 6 * CARD_SET
+pos_trumpf = INPUT_LAYER - 6
 
 
 class GameTraining(Training):
